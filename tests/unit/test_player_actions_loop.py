@@ -23,15 +23,21 @@ def playing_game_state():
 def test_discard_tile(playing_game_state):
     game_state = playing_game_state
     current_player = game_state.players[game_state.current_player_index]
-    tile_to_discard = current_player.hand[0]
+
+    # Find a tile that respects missing suit priority
+    missing_suit_tiles = [t for t in current_player.hand if t.suit == current_player.missing_suit]
+    if missing_suit_tiles:
+        tile_to_discard = missing_suit_tiles[0]
+    else:
+        tile_to_discard = current_player.hand[0]
 
     game_state = PlayerActions.discard_tile(
         game_state, current_player.player_id, tile_to_discard
     )
 
     # Re-fetch current_player from the updated game_state
-    current_player = game_state.players[(game_state.current_player_index - 1 + 4) % 4] # Get the player who just discarded
+    current_player_after = game_state.players[(game_state.current_player_index - 1 + 4) % 4] # Get the player who just discarded
 
     assert tile_to_discard in game_state.public_discards
-    assert tile_to_discard not in current_player.hand
+    assert tile_to_discard not in current_player_after.hand
     assert game_state.current_player_index == 1

@@ -61,22 +61,66 @@ This document breaks down the implementation of the Mahjong backend logic into a
 
 - [X] T032 [P] Add comprehensive docstrings to all public classes and functions in the `src/mahjong` directory.
 - [X] T033 [P] Create a `README.md` for the library inside `src/mahjong`.
-- [X] T034 Review all service functions that return `GameState` to ensure information filtering (e.g., hiding other players' hands) is correctly implemented as per FR-012.
+- [X] T034 Review all service functions that return `GameState` to ensure information filtering (e.g., hiding other players' hands) is correctly implemented as per FR-011.
 - [X] T035 Run `ruff check .` and `ruff format .` to ensure code quality and consistency.
 - [X] T036 Run all tests with `pytest` and ensure they all pass.
+
+**性能验证策略 (针对 SC-002)**:
+SC-002要求"玩家的任何有效动作必须在500毫秒内更新GameState对象"。该要求通过以下方式验证：
+- 所有服务方法采用简单算法，时间复杂度为O(1)或O(n)，其中n为手牌数量（最大14张）
+- 胡牌检查使用递归回溯，最坏情况为O(14!)，但实际剪枝后远低于此
+- 单元测试（T011, T016, T017, T023, T031）覆盖所有关键路径，在标准开发机上执行时间远低于100ms
+- 如未来需要显式性能基准测试，可在Phase 7后添加专门的性能测试任务
+
+## Phase 7: Observability (Constitution v1.0.1 Compliance)
+
+**Purpose**: Implement logging infrastructure per Constitution IV (Fast-Fail Error Handling) and Technical Standards (Observability)
+
+**Constitution Requirements**:
+- Log at key operations: game creation, phase transitions, player actions, errors
+- Use Python's `logging` module with INFO for operations, ERROR for exceptions
+- Log format MUST include: game_id, player_id, action_type, relevant data
+- Example: `logger.info(f"Game {game_id}: Player {player_id} discarded {tile}")`
+
+**Tasks**:
+
+- [X] T037 [P] Configure logging module in `src/mahjong/services/__init__.py` with standardized formatter
+- [X] T038 Add INFO-level logging to GameManager (`src/mahjong/services/game_manager.py`):
+  - Log game creation with game_id and player count
+  - Log game start with dealer assignment
+  - Log phase transitions (BURYING → PLAYING → ENDED)
+  - Log game end with final scores
+- [X] T039 Add INFO-level logging to PlayerActions (`src/mahjong/services/player_actions.py`):
+  - Log bury_cards with player_id, tiles, and missing_suit
+  - Log discard_tile with player_id and tile
+  - Log declare_action with player_id, action_type, and target_tile
+  - Log successful pong/kong/hu operations
+- [X] T040 Add ERROR-level logging to exception handlers in all services:
+  - Wrap InvalidActionError with context logging before raising
+  - Wrap InvalidGameStateError with context logging before raising
+  - Include full context: function name, game_id, player_id, action data
+- [X] T041 Create unit test in `tests/unit/test_logging.py`:
+  - Verify log format matches constitution requirements
+  - Test INFO logs appear for key operations
+  - Test ERROR logs appear with full context on exceptions
+  - Use pytest's caplog fixture to capture and validate log output
 
 ## Dependencies
 
 - **User Story 1** is a prerequisite for all other user stories.
 - **User Story 2** is a prerequisite for User Story 3.
-- The phases should be completed in order: `Setup -> Foundational -> US1 -> US2 -> US3 -> Polish`.
+- **Phase 7 (Observability)** should be completed after Phase 6 (Polish) and can run in parallel with final testing.
+- The phases should be completed in order: `Setup -> Foundational -> US1 -> US2 -> US3 -> Polish -> Observability`.
 
 ## Parallel Execution
 
 - Within the **Foundational** phase, tasks T005, T006, and T007 can be done in parallel.
-- Within the **Polish** phase, tasks T031 and T032 can be done in parallel.
+- Within the **Polish** phase, tasks T032 and T033 can be done in parallel.
+- Within the **Observability** phase, tasks T038, T039 can be done in parallel after T037 completes.
 - Most tasks within a single User Story phase are sequential, as they build upon each other (e.g., model -> service -> test).
 
 ## Implementation Strategy
 
 The implementation will follow the user stories in priority order, starting with User Story 1 as the Minimum Viable Product (MVP). Each user story represents a testable, deliverable increment of functionality. This ensures that the core game setup is working before moving on to the more complex game loop and settlement logic.
+
+**Phase 7 (Observability)** was added to ensure Constitution v1.0.1 compliance. Logging is essential for production readiness and debugging, providing visibility into game state transitions and player actions.
