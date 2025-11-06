@@ -108,6 +108,28 @@ class TestGameManagerInfoLogs:
         for player in game_state.players:
             assert player.player_id in log.message
 
+    def test_end_game_logs_correct_phase_transition(self, caplog):
+        """Test that end_game logs correct phase transition (not ENDED → ENDED)."""
+        caplog.set_level("INFO")
+        game_state = GameManager.create_game(["p1", "p2", "p3", "p4"])
+        game_state = GameManager.start_game(game_state)
+        caplog.clear()
+
+        # Game is in BURYING phase after start_game
+        assert game_state.game_phase.name == "BURYING"
+
+        game_state = GameManager.end_game(game_state)
+
+        # Find phase transition log
+        phase_logs = [r for r in caplog.records if "Phase transition" in r.message and "→ ENDED" in r.message]
+        assert len(phase_logs) == 1
+
+        log = phase_logs[0]
+        assert log.levelname == "INFO"
+        # Should show BURYING → ENDED, not ENDED → ENDED (issue #48)
+        assert "BURYING → ENDED" in log.message
+        assert "ENDED → ENDED" not in log.message
+
 
 class TestPlayerActionsInfoLogs:
     """Test INFO-level logging in PlayerActions."""

@@ -119,6 +119,8 @@ class GameManager:
         )
         logger.info(f"Game {game_state.game_id}: Ending game with scores: {scores_summary}")
 
+        # Cache previous phase before mutation for accurate logging
+        prev_phase = game_state.game_phase
         game_state.game_phase = GamePhase.ENDED
-        logger.info(f"Game {game_state.game_id}: Phase transition {game_state.game_phase.name} → ENDED")
+        logger.info(f"Game {game_state.game_id}: Phase transition {prev_phase.name} → ENDED")
         return game_state
