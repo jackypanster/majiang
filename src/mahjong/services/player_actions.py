@@ -43,22 +43,20 @@ class PlayerActions:
             if player.player_id == discard_player_id:
                 continue
 
-            # 跳过已经胡牌的玩家
-            if player.is_hu:
-                continue
-
             # AI决策：按优先级检查
             action_type = ActionType.PASS
 
-            # 1. 检查能否胡牌
+            # 1. 检查能否胡牌（已胡玩家仍可继续胡牌）
             if WinChecker.is_hu(player, discarded_tile):
                 action_type = ActionType.HU
-            # 2. 检查能否杠（明杠：手中3张）
-            elif player.hand.count(discarded_tile) >= 3:
-                action_type = ActionType.KONG_EXPOSED
-            # 3. 检查能否碰（手中2张）
-            elif player.hand.count(discarded_tile) >= 2:
-                action_type = ActionType.PONG
+            # 2. 已胡玩家不能碰/杠（手牌已锁定）
+            elif not player.is_hu:
+                # 检查能否杠（明杠：手中3张）
+                if player.hand.count(discarded_tile) >= 3:
+                    action_type = ActionType.KONG_EXPOSED
+                # 检查能否碰（手中2张）
+                elif player.hand.count(discarded_tile) >= 2:
+                    action_type = ActionType.PONG
 
             responses.append(PlayerResponse(
                 player_id=player.player_id,
@@ -94,6 +92,18 @@ class PlayerActions:
 
         # 如果最高优先级是PASS，说明没人响应
         if highest_response.action_type == ActionType.PASS:
+            # 检查牌墙是否为空
+            if not game_state.wall:
+                # 牌墙为空，检查是否有人胡牌
+                hu_count = sum(1 for p in game_state.players if p.is_hu)
+                if hu_count == 0:
+                    # 无人胡牌，流局
+                    from mahjong.services.game_manager import GameManager
+                    return GameManager.end_game(game_state)
+                else:
+                    # 有人胡牌，正常结算
+                    return replace(game_state, game_phase=GamePhase.ENDED)
+
             # 无人响应，下一个玩家摸牌
             return PlayerActions._next_player_draw(game_state)
 
@@ -129,8 +139,17 @@ class PlayerActions:
             next_player = new_players[new_current_player_index]
             updated_next_player_hand = list(next_player.hand)
             updated_next_player_hand.append(drawn_tile)
-            updated_next_player = replace(next_player, hand=updated_next_player_hand)
+            # 记录最后摸的牌（用于已胡玩家"摸什么打什么"）
+            updated_next_player = replace(
+                next_player,
+                hand=updated_next_player_hand,
+                last_drawn_tile=drawn_tile
+            )
             new_players[new_current_player_index] = updated_next_player
+        else:
+            # 牌墙为空，触发流局
+            # 注意：这里只是摸不到牌，实际流局判断在 discard_tile 中处理
+            pass
 
         return replace(
             game_state,
@@ -292,7 +311,16 @@ class PlayerActions:
         if tile not in current_player.hand:
             raise InvalidActionError(f"Tile {tile} not in player's hand in discard_tile(): {player_id}, {tile}")
 
-        # 2. 缺门优先检查（PRD.md 第 2.2 节第 32 行）
+        # 2. 已胡玩家摸什么打什么检查（血战规则）
+        # "所摸之牌必须在本回合立即打出，不能替换手中其他牌"
+        if current_player.is_hu and current_player.last_drawn_tile is not None:
+            if tile != current_player.last_drawn_tile:
+                raise InvalidActionError(
+                    f"已胡玩家 {player_id} 必须打出刚摸的牌 {current_player.last_drawn_tile}，"
+                    f"不能打出其他牌 {tile}"
+                )
+
+        # 3. 缺门优先检查（PRD.md 第 2.2 节第 32 行）
         # "玩家在后续出牌时，必须优先打完缺门花色的牌"
         if current_player.missing_suit is not None:
             # 检查手牌中是否还有缺门牌
@@ -306,11 +334,16 @@ class PlayerActions:
                     f"手牌中还有 {len(missing_suit_tiles)} 张缺门牌，不能打出非缺门牌 {tile}。"
                 )
 
-        # 3. 打牌到弃牌堆
+        # 4. 打牌到弃牌堆
         new_current_player_hand = list(current_player.hand)
         new_current_player_hand.remove(tile)
 
-        updated_current_player = replace(current_player, hand=new_current_player_hand)
+        # 打牌后清除 last_drawn_tile 标记
+        updated_current_player = replace(
+            current_player,
+            hand=new_current_player_hand,
+            last_drawn_tile=None
+        )
 
         new_public_discards = list(game_state.public_discards)
         new_public_discards.append(tile)
@@ -367,6 +400,17 @@ class PlayerActions:
         if action_type == ActionType.PASS:
             # No state change needed for PASS
             return game_state
+
+        # 已胡玩家不能执行碰/杠操作（手牌已锁定）
+        if player.is_hu and action_type in [
+            ActionType.PONG,
+            ActionType.KONG_EXPOSED,
+            ActionType.KONG_CONCEALED,
+            ActionType.KONG_UPGRADE
+        ]:
+            raise InvalidActionError(
+                f"已胡玩家 {player_id} 手牌已锁定，不能执行碰/杠操作"
+            )
 
         if action_type == ActionType.HU:
             # Check if player can win with this tile
