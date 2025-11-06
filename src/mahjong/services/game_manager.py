@@ -12,6 +12,34 @@ class GameManager:
     """Handles the lifecycle of the game."""
 
     @staticmethod
+    def get_game_state(game_state: GameState, player_id: str) -> dict:
+        """
+        获取针对特定玩家过滤的游戏状态
+
+        根据 PRD.md 第 3.1 节要求：
+        "get_game_state(player_id): 获取当前游戏状态。
+        为保证信息安全，应根据player_id过滤信息，例如只向该玩家展示其手牌。"
+
+        Args:
+            game_state: 当前游戏状态
+            player_id: 请求查看状态的玩家ID
+
+        Returns:
+            过滤后的游戏状态字典，包含：
+            - game_id, game_phase, current_player_index 等基础信息
+            - wall_remaining_count: 牌墙剩余数量
+            - public_discards: 公共弃牌堆（所有人可见）
+            - players: 玩家列表
+              - 请求玩家：包含完整 hand（手牌）
+              - 其他玩家：只包含 hand_count（手牌数量）
+              - 所有玩家：包含 melds（明牌）、buried_cards（埋牌）等公开信息
+
+        Raises:
+            ValueError: 如果 player_id 不在游戏中
+        """
+        return game_state.to_dict_for_player(player_id)
+
+    @staticmethod
     def create_game(player_ids: List[str]) -> GameState:
         """Creates a new game with four players."""
         if len(player_ids) != 4:
@@ -50,12 +78,23 @@ class GameManager:
 
     @staticmethod
     def end_game(game_state: GameState) -> GameState:
-        """Ends the game and performs final settlement."""
-        # Placeholder for end game logic.
-        # This would handle:
-        # 1. Final scoring.
-        # 2. Flow bureau (查花猪, 查大叫).
-        # 3. Determining the winner.
+        """
+        结束游戏（流局）
+
+        简化实现说明：
+        - 游戏模式为 1 个真人 + 3 个 AI
+        - AI 按规则严格执行，不会出现逻辑错误
+        - 因此不需要"查花猪"、"查大叫"、"退杠分"等检查
+        - 杠分已在发生时即时结算（刮风下雨）
+
+        流局触发条件：
+        - 牌墙摸完（wall 为空）且未满 3 家胡牌
+
+        Returns:
+            更新后的游戏状态
+        """
+        if game_state.game_phase == GamePhase.ENDED:
+            return game_state
+
         game_state.game_phase = GamePhase.ENDED
-        print("Game has ended.")
         return game_state

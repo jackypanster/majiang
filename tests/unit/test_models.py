@@ -22,7 +22,7 @@ def test_tile_invalid_rank():
 
 def test_meld_creation():
     tile1 = Tile(Suit.WAN, 2)
-    meld = Meld(ActionType.PONG, [tile1, tile1, tile1])
+    meld = Meld(ActionType.PONG, (tile1, tile1, tile1))
     assert meld.meld_type == ActionType.PONG
     assert len(meld.tiles) == 3
 
@@ -31,7 +31,7 @@ def test_player_creation():
     player = Player(player_id="p1")
     assert player.player_id == "p1"
     assert player.hand == []
-    assert player.score == 0
+    assert player.score == 100  # 初始分数100分
     assert not player.is_hu
 
 

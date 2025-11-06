@@ -13,5 +13,5 @@ class Player:
     melds: List[Meld] = field(default_factory=list)
     buried_cards: List[Tile] = field(default_factory=list)
     missing_suit: Optional[Suit] = None
-    score: int = 0
+    score: int = 100  # 初始分数100分（零和游戏：4人×100=400）
     is_hu: bool = False
