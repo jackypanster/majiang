@@ -10,6 +10,9 @@ from mahjong.models.player import Player
 from mahjong.models.response import PlayerResponse
 from mahjong.models.tile import Tile
 from mahjong.services.win_checker import WinChecker
+from mahjong.services import get_logger
+
+logger = get_logger(__name__)
 
 
 class PlayerActions:
@@ -233,15 +236,31 @@ class PlayerActions:
         game_state: GameState, player_id: str, tiles: List[Tile]
     ) -> GameState:
         if game_state.game_phase != GamePhase.BURYING:
+            logger.error(
+                f"Failed in bury_cards (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id}, phase={game_state.game_phase.name}, expected BURYING"
+            )
             raise InvalidGameStateError("Cannot bury cards outside of BURYING phase.")
 
         player = next((p for p in game_state.players if p.player_id == player_id), None)
         if not player:
+            logger.error(
+                f"Failed in bury_cards (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id} not found"
+            )
             raise ValueError(f"Player {player_id} not found.")
 
         if len(tiles) != 3:
+            logger.error(
+                f"Failed in bury_cards (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id}, tiles_count={len(tiles)}, expected 3"
+            )
             raise InvalidActionError("Must bury exactly 3 tiles.")
         if not all(t.suit == tiles[0].suit for t in tiles):
+            logger.error(
+                f"Failed in bury_cards (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id}, tiles not same suit"
+            )
             raise InvalidActionError("Buried tiles must be of the same suit.")
 
         # Check if all tiles are in hand and count is sufficient
@@ -271,10 +290,18 @@ class PlayerActions:
         player_index = next(i for i, p in enumerate(new_players) if p.player_id == player_id)
         new_players[player_index] = updated_player
 
+        # Log burial action
+        tiles_str = ", ".join(str(t) for t in tiles)
+        logger.info(
+            f"Game {game_state.game_id}: Player {player_id} buried cards [{tiles_str}], "
+            f"missing_suit={tiles[0].suit.name}"
+        )
+
         # Check if all players have buried their cards
         new_game_phase = game_state.game_phase
         if all(p.missing_suit is not None for p in new_players):
             new_game_phase = GamePhase.PLAYING
+            logger.info(f"Game {game_state.game_id}: Phase transition BURYING → PLAYING")
 
         return replace(
             game_state, players=new_players, game_phase=new_game_phase
@@ -300,15 +327,27 @@ class PlayerActions:
             更新后的游戏状态
         """
         if game_state.game_phase != GamePhase.PLAYING:
+            logger.error(
+                f"Failed in discard_tile (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id}, phase={game_state.game_phase.name}, expected PLAYING"
+            )
             raise InvalidGameStateError("Cannot discard tile outside of PLAYING phase.")
 
         current_player_index = game_state.current_player_index
         current_player = game_state.players[current_player_index]
         if current_player.player_id != player_id:
+            logger.error(
+                f"Failed in discard_tile (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id} tried to discard but it's {current_player.player_id}'s turn"
+            )
             raise InvalidActionError(f"It is not player {player_id}'s turn.")
 
         # 1. 检查牌是否在手牌中
         if tile not in current_player.hand:
+            logger.error(
+                f"Failed in discard_tile (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id}, tile={tile} not in hand"
+            )
             raise InvalidActionError(f"Tile {tile} not in player's hand in discard_tile(): {player_id}, {tile}")
 
         # 2. 已胡玩家摸什么打什么检查（血战规则）
@@ -335,6 +374,8 @@ class PlayerActions:
                 )
 
         # 4. 打牌到弃牌堆
+        logger.info(f"Game {game_state.game_id}: Player {player_id} discarded {tile}")
+
         new_current_player_hand = list(current_player.hand)
         new_current_player_hand.remove(tile)
 
@@ -389,13 +430,28 @@ class PlayerActions:
             Updated game state
         """
         if game_state.game_phase != GamePhase.PLAYING:
+            logger.error(
+                f"Failed in declare_action (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id}, action={action_type.name}, "
+                f"phase={game_state.game_phase.name}, expected PLAYING"
+            )
             raise InvalidGameStateError("Can only declare actions during PLAYING phase.")
 
         player = next((p for p in game_state.players if p.player_id == player_id), None)
         if not player:
+            logger.error(
+                f"Failed in declare_action (player_actions.py): "
+                f"Game {game_state.game_id}, player={player_id} not found"
+            )
             raise ValueError(f"Player {player_id} not found in declare_action(): {player_id}")
 
         player_index = next(i for i, p in enumerate(game_state.players) if p.player_id == player_id)
+
+        # Log action declaration
+        logger.info(
+            f"Game {game_state.game_id}: Player {player_id} declared action {action_type.name} "
+            f"on target_tile={target_tile}"
+        )
 
         if action_type == ActionType.PASS:
             # No state change needed for PASS
@@ -417,6 +473,8 @@ class PlayerActions:
             if not WinChecker.is_hu(player, target_tile):
                 raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile}")
 
+            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully HU (胡牌)")
+
             # Update player to mark as won
             updated_player = replace(player, is_hu=True)
             new_players = list(game_state.players)
@@ -430,6 +488,8 @@ class PlayerActions:
                 raise InvalidActionError(
                     f"Player {player_id} cannot PONG {target_tile} - only has {player.hand.count(target_tile)} in hand"
                 )
+
+            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully PONG (碰) {target_tile}")
 
             # Remove 2 tiles from hand
             new_hand = list(player.hand)
@@ -488,6 +548,11 @@ class PlayerActions:
                 new_players, game_state.base_score, player_id, meld_type, discard_player_id
             )
 
+            logger.info(
+                f"Game {game_state.game_id}: Player {player_id} successfully KONG (杠) {target_tile}, "
+                f"type={meld_type.name}"
+            )
+
             # Create new game state
             new_game_state = replace(
                 game_state,
@@ -534,6 +599,10 @@ class PlayerActions:
             # Settle kong scores immediately (刮风下雨)
             new_players = PlayerActions._settle_kong_score(
                 new_players, game_state.base_score, player_id, ActionType.KONG_CONCEALED
+            )
+
+            logger.info(
+                f"Game {game_state.game_id}: Player {player_id} successfully KONG_CONCEALED (暗杠) {target_tile}"
             )
 
             # Create new game state
@@ -598,6 +667,10 @@ class PlayerActions:
             # Settle kong scores immediately (刮风下雨)
             new_players = PlayerActions._settle_kong_score(
                 new_players, game_state.base_score, player_id, ActionType.KONG_UPGRADE
+            )
+
+            logger.info(
+                f"Game {game_state.game_id}: Player {player_id} successfully KONG_UPGRADE (补杠) {target_tile}"
             )
 
             # Create new game state
