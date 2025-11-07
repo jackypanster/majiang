@@ -1,13 +1,13 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: 血战到底麻将 - 后端服务
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Branch**: `001-backend-logic` | **Date**: 2025-01-06 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/001-backend-logic/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+实现"血战到底"麻将游戏的纯 Python 后端逻辑库。本服务为独立的游戏规则引擎，不包含网络通信、数据持久化或 UI 层。核心特性包括：血战到底模式（玩家第一次胡牌后手牌锁定但继续参与）、定缺埋牌、完整的胡牌判定和番数计算。
+
+技术方案采用三层架构：Models（不可变数据结构）、Services（无状态规则逻辑）、未来的 API 层（HTTP 适配）。使用 Python 3.8+ 标准库实现，零外部运行时依赖，pytest 测试，ruff 代码质量保证。
 
 ## Technical Context
 
@@ -25,18 +25,18 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **I. 极简实现 (Simplicity and Minimalism)**: **[PASS]** The design will use simple Python data classes for models and avoid external frameworks, focusing on core logic.
-- **II. 快速失败 (Fail Fast and Explicitly)**: **[PASS]** The API contract will specify that invalid operations (e.g., playing a non-existent tile) must raise exceptions.
-- **III. 真实测试 (Realistic and Direct Testing)**: **[PASS]** Testing will be performed on the actual game logic engine without using mocks.
-- **IV. 高效工具 (Modern and Efficient Tooling)**: **[PASS]** The project will use Python, `uv`, and `ruff` as defined in the constitution.
-- **V. 透明问题管理 (Transparent Issue Management)**: **[PASS]** All work will be tracked via GitHub Issues.
+- **I. Simplicity First**: **[PASS]** 使用简单的 `@dataclass` 定义模型，服务层采用无状态函数，避免过度抽象。函数保持在20行以内，重复优于错误的抽象。
+- **II. Test-First (NON-NEGOTIABLE)**: **[PASS]** 所有测试使用真实的 `GameState`, `Player`, `Tile` 对象，禁止 mock。测试先于实现编写，遵循 Red-Green-Refactor 循环。
+- **III. Library-First Architecture**: **[PASS]** 核心逻辑位于 `src/mahjong/`，零外部运行时依赖。Models/Services/API 三层清晰分离，FastAPI 层属于未来工作。
+- **IV. Fast-Fail Error Handling**: **[PASS]** 异常默认向上传播，自定义 `InvalidActionError`/`InvalidGameStateError`。错误消息包含完整上下文（函数名、player_id、tile、原因）。实现日志记录（INFO/ERROR级别）。
+- **V. Domain Model Integrity**: **[PASS]** 所有游戏规则严格遵循 `docs/PRD.md`。手牌数量限制、零和约束（总分=400）、血战到底规则均已在规格中明确。
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
+specs/001-backend-logic/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
