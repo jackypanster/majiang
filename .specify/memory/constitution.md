@@ -1,16 +1,19 @@
 <!--
 Sync Impact Report:
-- Version change: 1.0.0 → 1.0.1
+- Version change: 1.0.1 → 1.0.2
 - Modified principles:
-  - IV. Fast-Fail Error Handling: Added explicit logging requirements
-  - Technical Standards: Added Observability section
-- Added sections: Communication Standards
+  - II. Test-First: Added Frontend Testing Adaptation exemption
+- Added sections: Frontend Testing Adaptation (under Test-First principle)
 - Removed sections: N/A
 - Templates requiring updates:
   ✅ plan-template.md - No changes needed
   ✅ spec-template.md - No changes needed
   ✅ tasks-template.md - No changes needed
 - Follow-up TODOs: None
+- Previous changes (1.0.1):
+  - IV. Fast-Fail Error Handling: Added explicit logging requirements
+  - Technical Standards: Added Observability section
+  - Communication Standards section added
 -->
 
 # 血战到底麻将 Constitution
@@ -40,6 +43,29 @@ Sync Impact Report:
 - If test is hard to write, the design is wrong - refactor
 
 **Rationale**: Mocks test your assumptions, not your code. Real integration tests catch actual bugs. The restriction against mocks forces better design and provides confidence in the system.
+
+#### Frontend Testing Adaptation (Exemption)
+
+**Frontend UI layer testing is OPTIONAL; backend game logic testing remains MANDATORY.**
+
+**Backend (src/mahjong/, app/):**
+- Test-First principle applies WITHOUT exception
+- ALL game logic MUST have tests before implementation
+- Game rules are explicit and testable (win conditions, scoring, hand locking)
+- Tests verify correctness of complex state transitions
+
+**Frontend (frontend/):**
+- UI component testing is OPTIONAL
+- Visual bugs are easily discovered through manual browser testing
+- Critical business logic in Hooks/utils SHOULD have unit tests (recommended, not mandatory)
+- Integration tests verifying API contracts are RECOMMENDED
+
+**Rationale**: Backend encodes explicit game rules that are difficult to verify manually (e.g., "is this a valid hu condition?"). Frontend UI issues are immediately visible during development (e.g., "is the button clickable?"). The cost-benefit of comprehensive frontend UI testing does not justify mandatory TDD for presentation components. However, frontend business logic (state management, validation) should still be tested when complexity warrants.
+
+**Examples**:
+- ✅ Backend: `test_hu_after_bury()` MUST exist before implementing hu logic
+- ✅ Frontend Hook: `useGameState.test.ts` RECOMMENDED for complex polling logic
+- ⏭️ Frontend Component: `PlayerHand.test.tsx` OPTIONAL (manual testing sufficient)
 
 ### III. Library-First Architecture
 
@@ -237,4 +263,4 @@ For detailed implementation guidance during development, refer to:
 - `docs/PRD.md` - Complete game rules
 - `docs/backend_architecture.md` - System design
 
-**Version**: 1.0.1 | **Ratified**: 2025-01-06 | **Last Amended**: 2025-01-06
+**Version**: 1.0.2 | **Ratified**: 2025-01-06 | **Last Amended**: 2025-11-07
