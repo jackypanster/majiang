@@ -44,12 +44,15 @@ Represents a combination of tiles that a player has openly declared (Pong or Kon
 Represents a player's state within the game.
 
 -   **`player_id`**: `str` - A unique identifier for the player.
--   **`hand`**: `List[Tile]` - The player's private hand.
--   **`melds`**: `List[Meld]` - The player's open melds.
+-   **`hand`**: `List[Tile]` - The player's private hand (concealed tiles).
+-   **`melds`**: `List[Meld]` - The player's open melds (Pong/Kong).
 -   **`buried_cards`**: `List[Tile]` - The three tiles buried at the start.
 -   **`missing_suit`**: `Suit` - The suit the player has declared as missing.
--   **`score`**: `int` - The player's current score.
--   **`is_hu`**: `bool` - Flag indicating if the player has won.
+-   **`score`**: `int` - The player's current single-game score.
+-   **`is_hu`**: `bool` - Flag indicating if the player has won (at least once).
+-   **`hand_locked`**: `bool` - **[Blood Battle]** Flag indicating if hand is locked after first win (must "draw and discard immediately").
+-   **`hu_count`**: `int` - **[Blood Battle]** Number of times this player has won in the current game.
+-   **`total_score`**: `int` - **[Blood Battle]** Cumulative score including all wins and Kong bonuses.
 
 ### GameState
 

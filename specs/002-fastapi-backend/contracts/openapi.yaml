@@ -1,0 +1,466 @@
+openapi: 3.1.0
+info:
+  title: 血战到底麻将 Backend API
+  description: |
+    FastAPI HTTP backend for Blood Battle Mahjong game.
+
+    Features:
+    - Create game sessions (1 human + 3 AI players)
+    - Submit player actions (bury, discard, peng/gang/hu/skip)
+    - Automatic AI turn execution
+    - Query game state (filtered by player)
+
+    Game Rules: See `/docs/PRD.md` in repository
+  version: 1.0.0
+  contact:
+    name: Project Repository
+    url: https://github.com/your-org/majiang
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: games
+    description: Game session management
+  - name: actions
+    description: Player action submission
+
+paths:
+  /games:
+    post:
+      summary: Create new game session
+      description: |
+        Creates a new mahjong game with 4 players and deals initial cards.
+        Game starts in BURYING phase where all players must bury 3 same-suit tiles.
+
+        Default player IDs: ["human", "ai_1", "ai_2", "ai_3"]
+      operationId: create_game
+      tags:
+        - games
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameRequest'
+            examples:
+              default:
+                summary: Use default player IDs
+                value: {}
+              custom:
+                summary: Custom player IDs
+                value:
+                  player_ids: ["alice", "bob_ai", "carol_ai", "dave_ai"]
+      responses:
+        '200':
+          description: Game created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGameResponse'
+        '400':
+          description: Invalid request (e.g., wrong number of players)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /games/{game_id}:
+    get:
+      summary: Query game state
+      description: |
+        Returns current game state filtered for the specified player.
+        - Requesting player sees their full hand
+        - Other players' hands are hidden (only hand_count visible)
+      operationId: get_game_state
+      tags:
+        - games
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game UUID from create_game response
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the player requesting state
+      responses:
+        '200':
+          description: Game state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameStateResponse'
+        '404':
+          description: Game not found (never created or already cleaned up)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /games/{game_id}/action:
+    post:
+      summary: Submit player action
+      description: |
+        Submits a player action and automatically executes AI turns.
+
+        Action workflow:
+        1. Validate and process human player action
+        2. Execute all AI turns in sequence (with 5-second timeout)
+        3. Return updated game state when it's human's turn again or game ends
+
+        If game ends (phase=ENDED), session is immediately removed from memory.
+      operationId: submit_action
+      tags:
+        - actions
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerActionRequest'
+            examples:
+              bury:
+                summary: Bury 3 same-suit tiles
+                value:
+                  player_id: "human"
+                  action: "bury"
+                  tiles:
+                    - suit: "TONG"
+                      rank: 1
+                    - suit: "TONG"
+                      rank: 2
+                    - suit: "TONG"
+                      rank: 3
+              discard:
+                summary: Discard a tile
+                value:
+                  player_id: "human"
+                  action: "discard"
+                  tiles:
+                    - suit: "WAN"
+                      rank: 5
+              peng:
+                summary: Peng (form triplet)
+                value:
+                  player_id: "human"
+                  action: "peng"
+                  tiles:
+                    - suit: "TIAO"
+                      rank: 7
+              skip:
+                summary: Skip response
+                value:
+                  player_id: "human"
+                  action: "skip"
+      responses:
+        '200':
+          description: Action processed successfully, returns updated state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameStateResponse'
+        '400':
+          description: Invalid action (wrong phase, invalid tiles, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                wrong_phase:
+                  value:
+                    detail: "Cannot bury: game is in PLAYING phase"
+                invalid_tiles:
+                  value:
+                    detail: "Bury requires 3 same-suit tiles"
+                not_your_turn:
+                  value:
+                    detail: "Not your turn: current player is ai_1"
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Concurrent modification conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Game state changed, please refresh and retry"
+        '500':
+          description: AI execution error or timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                timeout:
+                  value:
+                    detail: "AI execution timeout after 5 seconds"
+                ai_error:
+                  value:
+                    detail: "AI encountered invalid state (critical bug)"
+
+components:
+  schemas:
+    CreateGameRequest:
+      type: object
+      properties:
+        player_ids:
+          type: array
+          items:
+            type: string
+          minItems: 4
+          maxItems: 4
+          description: |
+            Optional list of 4 player IDs.
+            If omitted, defaults to ["human", "ai_1", "ai_2", "ai_3"].
+          example: ["alice", "ai_1", "ai_2", "ai_3"]
+
+    CreateGameResponse:
+      type: object
+      required:
+        - game_id
+        - state
+      properties:
+        game_id:
+          type: string
+          format: uuid
+          description: Unique game identifier for subsequent API calls
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        state:
+          $ref: '#/components/schemas/GameState'
+
+    PlayerActionRequest:
+      type: object
+      required:
+        - player_id
+        - action
+      properties:
+        player_id:
+          type: string
+          description: ID of the player taking action
+          example: "human"
+        action:
+          type: string
+          enum: [bury, discard, peng, gang, hu, skip]
+          description: Type of action
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/TileInput'
+          description: |
+            Tiles involved in action:
+            - bury: 3 tiles (same suit)
+            - discard: 1 tile
+            - peng/gang: 1 tile (from opponent's discard)
+            - hu: 1 tile (winning tile)
+            - skip: null/empty
+
+    TileInput:
+      type: object
+      required:
+        - suit
+        - rank
+      properties:
+        suit:
+          type: string
+          enum: [TONG, TIAO, WAN]
+          description: Tile suit (筒/条/万)
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 9
+          description: Tile rank (1-9)
+      example:
+        suit: "TONG"
+        rank: 5
+
+    GameStateResponse:
+      allOf:
+        - type: object
+          required:
+            - game_id
+          properties:
+            game_id:
+              type: string
+              format: uuid
+        - $ref: '#/components/schemas/GameState'
+
+    GameState:
+      type: object
+      required:
+        - game_phase
+        - current_player_index
+        - players
+        - public_discards
+        - wall_remaining_count
+      properties:
+        game_phase:
+          type: string
+          enum: [BURYING, PLAYING, ENDED]
+          description: Current game phase
+        current_player_index:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Index of player whose turn it is (0-3)
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerState'
+          minItems: 4
+          maxItems: 4
+          description: States of all 4 players (filtered by viewer)
+        public_discards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: All discarded tiles (visible to everyone)
+        wall_remaining_count:
+          type: integer
+          minimum: 0
+          description: Number of tiles remaining in wall
+        winners:
+          type: array
+          items:
+            $ref: '#/components/schemas/WinResult'
+          nullable: true
+          description: Win details (only present if game_phase=ENDED)
+
+    PlayerState:
+      type: object
+      required:
+        - id
+        - score
+        - melds
+        - buried_cards
+      properties:
+        id:
+          type: string
+          description: Player ID
+        hand:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: |
+            Full hand (only visible to the player themselves).
+            Other players see hand_count instead.
+          nullable: true
+        hand_count:
+          type: integer
+          minimum: 0
+          description: Number of tiles in hand (for other players)
+          nullable: true
+        score:
+          type: integer
+          description: Current score
+        melds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Meld'
+          description: Open melds (碰/杠) visible to all players
+        buried_cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: Buried tiles (revealed after burying phase)
+        missing_suit:
+          type: string
+          enum: [TONG, TIAO, WAN]
+          nullable: true
+          description: Suit this player is missing (set after burying)
+        hand_locked:
+          type: boolean
+          description: Whether hand is locked (after first win in blood battle)
+        win_count:
+          type: integer
+          minimum: 0
+          description: Number of times player has won this game
+
+    Tile:
+      type: object
+      required:
+        - suit
+        - rank
+      properties:
+        suit:
+          type: string
+          enum: [TONG, TIAO, WAN]
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 9
+
+    Meld:
+      type: object
+      required:
+        - type
+        - tiles
+      properties:
+        type:
+          type: string
+          enum: [PENG, MING_GANG, AN_GANG, BU_GANG]
+          description: |
+            PENG: Triplet (碰)
+            MING_GANG: Open kong (明杠)
+            AN_GANG: Concealed kong (暗杠)
+            BU_GANG: Added kong (补杠)
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          minItems: 3
+          maxItems: 4
+
+    WinResult:
+      type: object
+      required:
+        - player_id
+        - fan
+        - score_change
+      properties:
+        player_id:
+          type: string
+        fan:
+          type: integer
+          minimum: 1
+          description: Fan count (番数)
+        score_change:
+          type: integer
+          description: Score gained/lost in this win
+        fan_details:
+          type: array
+          items:
+            type: string
+          description: List of fan types achieved (e.g., ["门清", "自摸"])
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+          example: "Game not found"
+
+securitySchemes: {}
+
+security: []
