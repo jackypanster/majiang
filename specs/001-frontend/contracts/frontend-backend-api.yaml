@@ -1,0 +1,730 @@
+openapi: 3.0.3
+info:
+  title: 血战到底麻将游戏 API
+  description: |
+    血战到底麻将游戏的后端 HTTP API 契约。
+
+    **核心功能**：
+    - 创建游戏（1真人 + 3AI）
+    - 查询游戏状态（针对玩家过滤）
+    - 提交玩家动作（埋牌/出牌/碰/杠/胡）
+
+    **技术特性**：
+    - 单机环境（localhost）
+    - 无用户认证
+    - 状态存储在内存（进程内字典）
+    - AI 自动执行，前端轮询同步状态
+
+  version: 1.0.0
+  contact:
+    name: 开发团队
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000
+    description: 本地开发服务器
+
+tags:
+  - name: games
+    description: 游戏管理相关接口
+
+paths:
+  /games:
+    post:
+      summary: 创建新游戏
+      description: |
+        创建一个新的血战到底麻将游戏，返回游戏ID和初始状态。
+
+        **游戏初始化流程**：
+        1. 创建4名玩家（默认：["human", "ai_1", "ai_2", "ai_3"]）
+        2. 洗牌并发牌（庄家14张，闲家13张）
+        3. 进入埋牌阶段（GamePhase.BURYING）
+        4. 返回针对真人玩家（"human"）过滤的游戏状态
+
+        **注意**：
+        - 游戏ID由后端生成（UUID v4）
+        - AI玩家顺序固定，用于后续动作执行
+        - 返回的状态已过滤：真人玩家看到完整手牌，AI玩家仅显示手牌数量
+
+      operationId: createGame
+      tags:
+        - games
+      requestBody:
+        description: 可选：自定义玩家ID列表（必须4个）
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameRequest'
+            examples:
+              default:
+                summary: 默认玩家配置
+                value: {}
+              custom:
+                summary: 自定义玩家ID
+                value:
+                  player_ids: ["alice", "ai_1", "ai_2", "ai_3"]
+
+      responses:
+        '200':
+          description: 游戏创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGameResponse'
+              examples:
+                success:
+                  summary: 成功创建游戏
+                  value:
+                    game_id: "550e8400-e29b-41d4-a716-446655440000"
+                    state:
+                      game_id: "550e8400-e29b-41d4-a716-446655440000"
+                      game_phase: "BURYING"
+                      current_player_index: 0
+                      wall_remaining_count: 81
+                      public_discards: []
+                      base_score: 1
+                      players:
+                        - player_id: "human"
+                          hand:
+                            - { suit: "WAN", rank: 1 }
+                            - { suit: "TIAO", rank: 5 }
+                          melds: []
+                          buried_cards: []
+                          missing_suit: null
+                          score: 100
+                          is_hu: false
+                        - player_id: "ai_1"
+                          hand_count: 13
+                          melds: []
+                          buried_cards: []
+                          missing_suit: null
+                          score: 100
+                          is_hu: false
+
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error:
+                  summary: 游戏创建失败
+                  value:
+                    detail: "Internal server error"
+
+  /games/{game_id}:
+    get:
+      summary: 查询游戏状态
+      description: |
+        查询指定游戏的当前状态，返回针对特定玩家过滤的信息。
+
+        **过滤规则**（基于 `player_id` 参数）：
+        - **请求玩家的手牌**：完整显示（Tile 数组）
+        - **其他玩家的手牌**：仅显示数量（hand_count 字段）
+        - **公开信息**：所有玩家均可见（明牌、弃牌堆、埋牌、分数等）
+
+        **使用场景**：
+        - 前端轮询（500ms间隔）检测AI回合变化
+        - 玩家刷新页面后恢复游戏状态
+
+      operationId: getGameState
+      tags:
+        - games
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: 游戏UUID（由创建游戏接口返回）
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+        - name: player_id
+          in: query
+          required: true
+          description: 请求查看状态的玩家ID（用于过滤信息）
+          schema:
+            type: string
+          example: "human"
+
+      responses:
+        '200':
+          description: 游戏状态查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameStateResponse'
+              examples:
+                burying_phase:
+                  summary: 埋牌阶段
+                  value:
+                    game_id: "550e8400-e29b-41d4-a716-446655440000"
+                    game_phase: "BURYING"
+                    current_player_index: 0
+                    wall_remaining_count: 81
+                    public_discards: []
+                    base_score: 1
+                    players:
+                      - player_id: "human"
+                        hand:
+                          - { suit: "WAN", rank: 1 }
+                        melds: []
+                        buried_cards: []
+                        missing_suit: null
+                        score: 100
+                        is_hu: false
+
+                playing_phase:
+                  summary: 游戏进行中
+                  value:
+                    game_id: "550e8400-e29b-41d4-a716-446655440000"
+                    game_phase: "PLAYING"
+                    current_player_index: 2
+                    wall_remaining_count: 60
+                    public_discards:
+                      - { suit: "TONG", rank: 3 }
+                      - { suit: "WAN", rank: 7 }
+                    base_score: 1
+                    players:
+                      - player_id: "human"
+                        hand:
+                          - { suit: "WAN", rank: 1 }
+                          - { suit: "TIAO", rank: 5 }
+                        melds:
+                          - meld_type: "PONG"
+                            tiles:
+                              - { suit: "TONG", rank: 1 }
+                              - { suit: "TONG", rank: 1 }
+                              - { suit: "TONG", rank: 1 }
+                            is_concealed: false
+                        buried_cards:
+                          - { suit: "TONG", rank: 2 }
+                          - { suit: "TONG", rank: 4 }
+                          - { suit: "TONG", rank: 6 }
+                        missing_suit: "TONG"
+                        score: 98
+                        is_hu: false
+
+        '404':
+          description: 游戏不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                game_not_found:
+                  summary: 游戏ID不存在
+                  value:
+                    detail: "Game not found"
+
+  /games/{game_id}/action:
+    post:
+      summary: 提交玩家动作
+      description: |
+        提交真人玩家的游戏动作（埋牌、出牌、碰、杠、胡、跳过）。
+
+        **执行流程**：
+        1. 验证并执行真人玩家动作
+        2. 自动执行所有AI玩家回合（5秒超时）
+        3. 返回更新后的游戏状态（轮到真人或游戏结束）
+
+        **动作类型说明**：
+        - `bury`: 埋牌（需要3张同花色牌）
+        - `draw`: 摸牌（调试接口，正常由后端自动触发）
+        - `discard`: 出牌（需要1张牌）
+        - `peng`: 碰（需要指定目标牌）
+        - `gang`: 杠（需要指定目标牌）
+        - `hu`: 胡（需要指定目标牌）
+        - `skip`: 跳过（不需要牌）
+
+        **AI自动执行**：
+        - AI玩家动作由后端自动执行，前端无需轮询
+        - AI执行顺序固定（按创建游戏时的 ai_order）
+        - 响应优先级：胡 > 杠 > 碰 > 跳过
+        - 超时限制：5秒（超时返回500错误）
+
+      operationId: submitAction
+      tags:
+        - games
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: 游戏UUID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+      requestBody:
+        description: 玩家动作请求
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerActionRequest'
+            examples:
+              bury_action:
+                summary: 埋牌动作
+                value:
+                  player_id: "human"
+                  action: "bury"
+                  tiles:
+                    - { suit: "TONG", rank: 1 }
+                    - { suit: "TONG", rank: 2 }
+                    - { suit: "TONG", rank: 3 }
+
+              discard_action:
+                summary: 出牌动作
+                value:
+                  player_id: "human"
+                  action: "discard"
+                  tiles:
+                    - { suit: "WAN", rank: 5 }
+
+              peng_action:
+                summary: 碰牌动作
+                value:
+                  player_id: "human"
+                  action: "peng"
+                  tiles:
+                    - { suit: "TIAO", rank: 7 }
+
+              hu_action:
+                summary: 胡牌动作
+                value:
+                  player_id: "human"
+                  action: "hu"
+                  tiles:
+                    - { suit: "WAN", rank: 9 }
+
+              skip_action:
+                summary: 跳过动作
+                value:
+                  player_id: "human"
+                  action: "skip"
+
+      responses:
+        '200':
+          description: 动作执行成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameStateResponse'
+              examples:
+                still_playing:
+                  summary: 游戏继续（轮到真人）
+                  value:
+                    game_id: "550e8400-e29b-41d4-a716-446655440000"
+                    game_phase: "PLAYING"
+                    current_player_index: 0
+                    wall_remaining_count: 55
+                    public_discards:
+                      - { suit: "WAN", rank: 5 }
+                    base_score: 1
+                    players:
+                      - player_id: "human"
+                        hand:
+                          - { suit: "TIAO", rank: 1 }
+                        melds: []
+                        buried_cards:
+                          - { suit: "TONG", rank: 1 }
+                          - { suit: "TONG", rank: 2 }
+                          - { suit: "TONG", rank: 3 }
+                        missing_suit: "TONG"
+                        score: 100
+                        is_hu: false
+
+                game_ended:
+                  summary: 游戏结束（有人胡牌）
+                  value:
+                    game_id: "550e8400-e29b-41d4-a716-446655440000"
+                    game_phase: "ENDED"
+                    current_player_index: 0
+                    wall_remaining_count: 30
+                    public_discards:
+                      - { suit: "WAN", rank: 5 }
+                    base_score: 1
+                    players:
+                      - player_id: "human"
+                        hand:
+                          - { suit: "TIAO", rank: 1 }
+                        melds: []
+                        buried_cards:
+                          - { suit: "TONG", rank: 1 }
+                        missing_suit: "TONG"
+                        score: 110
+                        is_hu: true
+                      - player_id: "ai_1"
+                        hand_count: 0
+                        melds: []
+                        buried_cards:
+                          - { suit: "WAN", rank: 1 }
+                        missing_suit: "WAN"
+                        score: 90
+                        is_hu: false
+
+        '400':
+          description: 客户端错误（无效动作）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_tiles:
+                  summary: 牌数不正确
+                  value:
+                    detail: "Bury requires exactly 3 tiles"
+
+                invalid_suit:
+                  summary: 埋牌花色不一致
+                  value:
+                    detail: "Buried tiles must be of the same suit"
+
+                not_player_turn:
+                  summary: 不是玩家回合
+                  value:
+                    detail: "Not player's turn"
+
+        '404':
+          description: 游戏不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                game_not_found:
+                  value:
+                    detail: "Game not found"
+
+        '409':
+          description: 游戏状态冲突
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_game_state:
+                  summary: 游戏状态异常
+                  value:
+                    detail: "Invalid game state: Game already ended"
+
+        '500':
+          description: 服务器内部错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ai_timeout:
+                  summary: AI执行超时
+                  value:
+                    detail: "AI execution timeout after 5 seconds"
+
+                server_error:
+                  summary: 内部错误
+                  value:
+                    detail: "Internal server error"
+
+components:
+  schemas:
+    # ==================== 枚举类型 ====================
+
+    Suit:
+      type: string
+      enum: [WAN, TIAO, TONG]
+      description: |
+        麻将牌花色
+        - WAN: 万（Characters）
+        - TIAO: 条（Bamboos）
+        - TONG: 筒（Dots）
+
+    GamePhase:
+      type: string
+      enum: [PREPARING, BURYING, PLAYING, ENDED]
+      description: |
+        游戏阶段
+        - PREPARING: 准备阶段（前端不使用）
+        - BURYING: 埋牌阶段
+        - PLAYING: 游戏进行中
+        - ENDED: 游戏结束
+
+    MeldType:
+      type: string
+      enum: [PONG, KONG, KONG_EXPOSED, KONG_CONCEALED, KONG_UPGRADE]
+      description: |
+        明牌组合类型
+        - PONG: 碰（3张）
+        - KONG: 通用杠（向后兼容）
+        - KONG_EXPOSED: 明杠/直杠（3手牌+1打出的牌，2倍分）
+        - KONG_CONCEALED: 暗杠（4手牌，1倍分）
+        - KONG_UPGRADE: 补杠/巴杠（碰升级为杠，1倍分）
+
+    ActionType:
+      type: string
+      enum: [bury, draw, discard, peng, gang, hu, skip]
+      description: |
+        玩家动作类型（API层使用小写）
+        - bury: 埋牌
+        - draw: 摸牌（调试接口）
+        - discard: 出牌
+        - peng: 碰
+        - gang: 杠
+        - hu: 胡
+        - skip: 跳过
+
+    # ==================== 数据模型 ====================
+
+    Tile:
+      type: object
+      required: [suit, rank]
+      properties:
+        suit:
+          $ref: '#/components/schemas/Suit'
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 9
+          description: 牌的点数（1-9）
+      example:
+        suit: "WAN"
+        rank: 5
+
+    Meld:
+      type: object
+      required: [meld_type, tiles]
+      properties:
+        meld_type:
+          $ref: '#/components/schemas/MeldType'
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          minItems: 3
+          maxItems: 4
+          description: 明牌组合中的牌（碰3张，杠4张）
+        is_concealed:
+          type: boolean
+          default: false
+          description: 是否暗杠（用于判断门清）
+      example:
+        meld_type: "PONG"
+        tiles:
+          - { suit: "TONG", rank: 1 }
+          - { suit: "TONG", rank: 1 }
+          - { suit: "TONG", rank: 1 }
+        is_concealed: false
+
+    Player:
+      type: object
+      required: [player_id, melds, buried_cards, score, is_hu]
+      properties:
+        player_id:
+          type: string
+          description: 玩家ID
+        hand:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: 手牌（仅请求玩家可见完整内容）
+        hand_count:
+          type: integer
+          minimum: 0
+          description: 手牌数量（其他玩家仅可见数量）
+        melds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Meld'
+          description: 明牌组合（所有人可见）
+        buried_cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: 埋牌（所有人可见）
+        missing_suit:
+          allOf:
+            - $ref: '#/components/schemas/Suit'
+          nullable: true
+          description: 缺门花色（埋牌后确定）
+        score:
+          type: integer
+          description: 当前分数
+        is_hu:
+          type: boolean
+          description: 是否已胡牌
+      example:
+        player_id: "human"
+        hand:
+          - { suit: "WAN", rank: 1 }
+          - { suit: "TIAO", rank: 5 }
+        melds: []
+        buried_cards:
+          - { suit: "TONG", rank: 1 }
+          - { suit: "TONG", rank: 2 }
+          - { suit: "TONG", rank: 3 }
+        missing_suit: "TONG"
+        score: 100
+        is_hu: false
+
+    # ==================== 请求/响应模型 ====================
+
+    CreateGameRequest:
+      type: object
+      properties:
+        player_ids:
+          type: array
+          items:
+            type: string
+          minItems: 4
+          maxItems: 4
+          description: |
+            玩家ID列表（必须4个）
+            如果不提供，默认为 ["human", "ai_1", "ai_2", "ai_3"]
+      example:
+        player_ids: ["alice", "ai_1", "ai_2", "ai_3"]
+
+    CreateGameResponse:
+      type: object
+      required: [game_id, state]
+      properties:
+        game_id:
+          type: string
+          format: uuid
+          description: 游戏UUID（用于后续API调用）
+        state:
+          type: object
+          description: 初始游戏状态（已针对真人玩家过滤）
+          properties:
+            game_id:
+              type: string
+            game_phase:
+              $ref: '#/components/schemas/GamePhase'
+            current_player_index:
+              type: integer
+            wall_remaining_count:
+              type: integer
+            public_discards:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tile'
+            base_score:
+              type: integer
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/Player'
+      example:
+        game_id: "550e8400-e29b-41d4-a716-446655440000"
+        state:
+          game_id: "550e8400-e29b-41d4-a716-446655440000"
+          game_phase: "BURYING"
+          current_player_index: 0
+          wall_remaining_count: 81
+          public_discards: []
+          base_score: 1
+          players:
+            - player_id: "human"
+              hand:
+                - { suit: "WAN", rank: 1 }
+              melds: []
+              buried_cards: []
+              missing_suit: null
+              score: 100
+              is_hu: false
+
+    PlayerActionRequest:
+      type: object
+      required: [player_id, action]
+      properties:
+        player_id:
+          type: string
+          description: 执行动作的玩家ID
+        action:
+          $ref: '#/components/schemas/ActionType'
+        tiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: |
+            涉及的牌（根据动作类型决定）
+            - bury: 需要3张同花色牌
+            - discard: 需要1张牌
+            - peng/gang/hu: 需要指定目标牌
+            - skip: 不需要牌
+      example:
+        player_id: "human"
+        action: "discard"
+        tiles:
+          - { suit: "WAN", rank: 5 }
+
+    GameStateResponse:
+      type: object
+      required: [game_id, game_phase, current_player_index, wall_remaining_count, public_discards, base_score, players]
+      properties:
+        game_id:
+          type: string
+          format: uuid
+        game_phase:
+          $ref: '#/components/schemas/GamePhase'
+        current_player_index:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: 当前回合玩家索引（0-3）
+        wall_remaining_count:
+          type: integer
+          minimum: 0
+          description: 牌墙剩余牌数
+        public_discards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tile'
+          description: 弃牌堆（所有人可见）
+        base_score:
+          type: integer
+          description: 底分（杠分计算用）
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+          minItems: 4
+          maxItems: 4
+          description: 4名玩家状态（已过滤）
+      example:
+        game_id: "550e8400-e29b-41d4-a716-446655440000"
+        game_phase: "PLAYING"
+        current_player_index: 0
+        wall_remaining_count: 60
+        public_discards:
+          - { suit: "TONG", rank: 3 }
+        base_score: 1
+        players:
+          - player_id: "human"
+            hand:
+              - { suit: "WAN", rank: 1 }
+            melds: []
+            buried_cards:
+              - { suit: "TONG", rank: 1 }
+            missing_suit: "TONG"
+            score: 100
+            is_hu: false
+
+    ErrorResponse:
+      type: object
+      required: [detail]
+      properties:
+        detail:
+          type: string
+          description: 错误消息（中文或英文）
+      example:
+        detail: "Game not found"
+
+  # ==================== 安全定义 ====================
+  securitySchemes: {}
+
+# ==================== 全局安全配置 ====================
+security: []
