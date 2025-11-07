@@ -46,12 +46,13 @@ class PlayerActionRequest(BaseModel):
 
     Action Types:
         - bury: Requires 3 tiles (埋牌阶段)
+        - draw: Manual draw tile (debug interface, normally automatic)
         - discard: Requires 1 tile (出牌)
         - peng/gang/hu: Requires tile from opponent's discard
         - skip: No tiles required
     """
     player_id: str = Field(..., description="ID of the player taking action")
-    action: Literal["bury", "discard", "peng", "gang", "hu", "skip"] = Field(
+    action: Literal["bury", "draw", "discard", "peng", "gang", "hu", "skip"] = Field(
         ..., description="Action type"
     )
     tiles: Optional[List[TileInput]] = Field(
