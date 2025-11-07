@@ -54,12 +54,15 @@ async def create_game(request: CreateGameRequest = CreateGameRequest()):
         # Use GameState's game_id
         game_id = game_state.game_id
 
-        # Store session
-        session = GameSession(game_id, datetime.now(), game_state)
+        # Extract AI player IDs in fixed order (for deterministic AI execution)
+        ai_order = [pid for pid in player_ids if pid != "human"]
+
+        # Store session with AI order
+        session = GameSession(game_id, datetime.now(), game_state, ai_order)
         from app.main import GAMES
         GAMES[game_id] = session
 
-        logger.info(f"API: Created game {game_id} with players {player_ids}")
+        logger.info(f"API: Created game {game_id} with players {player_ids}, AI order: {ai_order}")
 
         # Return initial state (filtered for human player)
         state = game_state.to_dict_for_player("human")
@@ -136,6 +139,12 @@ async def submit_action(game_id: str, request: PlayerActionRequest):
             if len(tiles) != 3:
                 raise HTTPException(status_code=400, detail="Bury requires exactly 3 tiles")
             game_state = PlayerActions.bury_cards(game_state, player_id, tiles)
+
+        elif action == "draw":
+            # Debug interface: manually trigger draw (normally automatic after discard)
+            logger.info(f"Game {game_id}: Manual draw requested by {player_id} (debug mode)")
+            # Call private method for debugging purposes
+            game_state = PlayerActions._next_player_draw(game_state)
 
         elif action == "discard":
             if len(tiles) != 1:
@@ -244,25 +253,37 @@ async def execute_ai_turns(game_id: str, human_player_id: str):
             game_state = PlayerActions.discard_tile(game_state, current_player.player_id, tile_to_discard)
             logger.info(f"Game {game_id}: AI {current_player.player_id} discarded {tile_to_discard}")
 
-            # Collect responses from all other players (including human)
+            # Collect responses from AI players in fixed order (honoring ai_order)
+            # Priority: HU > GANG > PENG > SKIP
             responses = {}
-            for player in game_state.players:
-                if player.player_id == current_player.player_id:
+            for ai_player_id in session.ai_order:
+                if ai_player_id == current_player.player_id:
                     continue  # Skip discarder
-                if player.player_id == human_player_id:
-                    # Human will respond in next request
-                    continue
-                # AI players respond
-                response = ai.choose_response(player, tile_to_discard, game_state)
-                responses[player.player_id] = response
+                # Find the player object
+                player = next((p for p in game_state.players if p.player_id == ai_player_id), None)
+                if player:
+                    response = ai.choose_response(player, tile_to_discard, game_state)
+                    responses[ai_player_id] = response
 
-            # TODO: Handle responses (hu > gang > peng > skip priority)
-            # For now, simplified: process first non-skip response
-            for pid, resp in responses.items():
-                if resp.action_type != ActionType.SKIP:
-                    game_state = PlayerActions.process_response(game_state, pid, resp)
-                    logger.info(f"Game {game_id}: AI {pid} responded with {resp.action_type}")
-                    break
+            # Process responses by priority: HU > GANG > PENG > SKIP
+            # Find highest priority response
+            hu_responses = [(pid, resp) for pid, resp in responses.items() if resp.action_type == ActionType.HU]
+            gang_responses = [(pid, resp) for pid, resp in responses.items() if resp.action_type == ActionType.GANG]
+            peng_responses = [(pid, resp) for pid, resp in responses.items() if resp.action_type == ActionType.PENG]
+
+            # Process highest priority response
+            if hu_responses:
+                pid, resp = hu_responses[0]  # First HU wins
+                game_state = PlayerActions.process_response(game_state, pid, resp)
+                logger.info(f"Game {game_id}: AI {pid} responded with HU (highest priority)")
+            elif gang_responses:
+                pid, resp = gang_responses[0]  # First GANG
+                game_state = PlayerActions.process_response(game_state, pid, resp)
+                logger.info(f"Game {game_id}: AI {pid} responded with GANG")
+            elif peng_responses:
+                pid, resp = peng_responses[0]  # First PENG
+                game_state = PlayerActions.process_response(game_state, pid, resp)
+                logger.info(f"Game {game_id}: AI {pid} responded with PENG")
 
         # Update session
         session.game_state = game_state
