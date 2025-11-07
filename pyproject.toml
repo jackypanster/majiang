@@ -1,0 +1,44 @@
+[project]
+name = "majiang"
+version = "0.1.0"
+description = "Blood Battle Mahjong game with FastAPI backend"
+authors = [
+    { name = "zhibinpan", email = "zhibin.pan@outlook.com" }
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mahjong"]
+
+[tool.ruff]
+line-length = 88
+
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.format]
+quote-style = "double"
