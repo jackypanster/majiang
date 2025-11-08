@@ -104,11 +104,13 @@ export function ActionButtons({
   };
 
   // T061: 跳过动作提交
+  // 注意：skip 动作不需要传递 tiles，后端会自动从 public_discards 获取
   const handleSkip = () => {
     mutation.mutate({
       playerId,
       action: 'skip',
-      tiles: lastDiscardedTile ? [lastDiscardedTile] : undefined,
+      // ✅ 不传递 tiles，避免触发后端 422 验证错误（Issue #70）
+      tiles: undefined,
     });
   };
 
