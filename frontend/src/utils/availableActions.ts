@@ -53,25 +53,49 @@ export function canKong(player: Player, targetTile: Tile): boolean {
  * 一旦选择胡牌，手牌结构就固定了，不能再改变。
  */
 export function canHu(player: Player, targetTile: Tile, isPlayerTurn: boolean): boolean {
-  if (!targetTile) return false;
+  if (!targetTile) {
+    logger.log('[canHu] No target tile', { playerId: player.playerId });
+    return false;
+  }
 
   // ✅ 简化逻辑：前端只做基本预检测，复杂的结构检查由后端负责
   // 这样可以避免前后端逻辑不一致导致的bug（例如Issue #69）
 
   // 基本检查 1：目标牌不能是缺门花色
-  if (player.missingSuit && targetTile.suit === player.missingSuit) {
-    logger.log('[canHu] Cannot HU - target tile is missing suit', {
+  // 使用严格的字符串比较（强制转换为大写字符串）
+  if (player.missingSuit && targetTile.suit) {
+    const missingSuitStr = String(player.missingSuit).toUpperCase();
+    const targetSuitStr = String(targetTile.suit).toUpperCase();
+
+    logger.log('[canHu] Checking missing suit', {
       playerId: player.playerId,
       missingSuit: player.missingSuit,
+      missingSuitStr,
       targetTile,
+      targetSuitStr,
+      isMatch: missingSuitStr === targetSuitStr,
     });
-    return false;
+
+    if (missingSuitStr === targetSuitStr) {
+      logger.log('[canHu] Cannot HU - target tile is missing suit', {
+        playerId: player.playerId,
+        missingSuit: player.missingSuit,
+        targetTile,
+      });
+      return false;
+    }
   }
 
   // 基本检查 2：手牌中不能包含缺门花色的牌
   // 规则：胡牌时任何暗牌都不得包含自己的缺门花色
-  if (player.missingSuit) {
-    const hasMissingSuitTiles = player.hand.some(tile => tile.suit === player.missingSuit);
+  if (player.missingSuit && player.hand && player.hand.length > 0) {
+    const missingSuitStr = String(player.missingSuit).toUpperCase();
+
+    const hasMissingSuitTiles = player.hand.some(tile => {
+      const tileSuitStr = String(tile.suit).toUpperCase();
+      return tileSuitStr === missingSuitStr;
+    });
+
     if (hasMissingSuitTiles) {
       logger.log('[canHu] Cannot HU - hand contains missing suit tiles', {
         playerId: player.playerId,
@@ -89,8 +113,8 @@ export function canHu(player: Player, targetTile: Tile, isPlayerTurn: boolean): 
   logger.log('[canHu] Basic checks passed, returning true (backend will do final validation)', {
     playerId: player.playerId,
     targetTile,
-    handCount: player.hand.length,
-    meldCount: player.melds.length,
+    handCount: player.hand?.length || 0,
+    meldCount: player.melds?.length || 0,
   });
 
   return true;
