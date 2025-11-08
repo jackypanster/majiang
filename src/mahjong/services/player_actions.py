@@ -25,6 +25,8 @@ class PlayerActions:
         """
         收集AI玩家对打出牌的响应（1个真人 + 3个AI模式）
 
+        注意：人类玩家（"human"）的响应通过前端UI提交，不在此处自动收集
+
         AI决策策略（简单）：
         1. 能胡 → 胡
         2. 能杠 → 杠
@@ -37,13 +39,17 @@ class PlayerActions:
             discard_player_id: 打牌者ID
 
         Returns:
-            所有玩家的响应列表
+            AI玩家的响应列表（不包括人类玩家）
         """
         responses = []
 
         for player in game_state.players:
             # 跳过打牌者自己
             if player.player_id == discard_player_id:
+                continue
+
+            # 跳过人类玩家（响应通过前端UI提交）
+            if player.player_id == "human":
                 continue
 
             # AI决策：按优先级检查
@@ -95,19 +101,8 @@ class PlayerActions:
 
         # 如果最高优先级是PASS，说明没人响应
         if highest_response.action_type == ActionType.PASS:
-            # 检查牌墙是否为空
-            if not game_state.wall:
-                # 牌墙为空，检查是否有人胡牌
-                hu_count = sum(1 for p in game_state.players if p.is_hu)
-                if hu_count == 0:
-                    # 无人胡牌，流局
-                    from mahjong.services.game_manager import GameManager
-                    return GameManager.end_game(game_state)
-                else:
-                    # 有人胡牌，正常结算
-                    return replace(game_state, game_phase=GamePhase.ENDED)
-
-            # 无人响应，下一个玩家摸牌
+            # 无人响应，尝试让下一个玩家摸牌
+            # _next_player_draw 会检查牌墙是否为空，如果为空则结束游戏
             return PlayerActions._next_player_draw(game_state)
 
         # 有人响应，执行对应操作
@@ -136,23 +131,25 @@ class PlayerActions:
         new_wall = list(game_state.wall)
         new_players = list(game_state.players)
 
+        # 检查牌墙是否为空
+        if not new_wall:
+            # 牌墙为空，游戏结束（血战到底:牌摸完即结束）
+            from mahjong.services.game_manager import GameManager
+            logger.info(f"Game {game_state.game_id}: Wall empty, ending game")
+            return GameManager.end_game(game_state)
+
         # 下一个玩家摸牌
-        if new_wall:
-            drawn_tile = new_wall.pop(0)
-            next_player = new_players[new_current_player_index]
-            updated_next_player_hand = list(next_player.hand)
-            updated_next_player_hand.append(drawn_tile)
-            # 记录最后摸的牌（用于已胡玩家"摸什么打什么"）
-            updated_next_player = replace(
-                next_player,
-                hand=updated_next_player_hand,
-                last_drawn_tile=drawn_tile
-            )
-            new_players[new_current_player_index] = updated_next_player
-        else:
-            # 牌墙为空，触发流局
-            # 注意：这里只是摸不到牌，实际流局判断在 discard_tile 中处理
-            pass
+        drawn_tile = new_wall.pop(0)
+        next_player = new_players[new_current_player_index]
+        updated_next_player_hand = list(next_player.hand)
+        updated_next_player_hand.append(drawn_tile)
+        # 记录最后摸的牌（用于已胡玩家"摸什么打什么"）
+        updated_next_player = replace(
+            next_player,
+            hand=updated_next_player_hand,
+            last_drawn_tile=drawn_tile
+        )
+        new_players[new_current_player_index] = updated_next_player
 
         return replace(
             game_state,
@@ -308,7 +305,7 @@ class PlayerActions:
         )
 
     @staticmethod
-    def discard_tile(game_state: GameState, player_id: str, tile: Tile) -> GameState:
+    def discard_tile(game_state: GameState, player_id: str, tile: Tile, skip_responses: bool = False) -> GameState:
         """
         打牌并处理AI响应（1个真人 + 3个AI模式）
 
@@ -322,6 +319,7 @@ class PlayerActions:
             game_state: 当前游戏状态
             player_id: 打牌者ID
             tile: 打出的牌
+            skip_responses: 如果为True，只打牌不处理响应（用于AI循环中检查人类响应）
 
         Returns:
             更新后的游戏状态
@@ -342,7 +340,14 @@ class PlayerActions:
             )
             raise InvalidActionError(f"It is not player {player_id}'s turn.")
 
-        # 1. 检查牌是否在手牌中
+        # 1. 记录手牌数量用于调试（不阻止游戏）
+        hand_count = len(current_player.hand)
+        logger.info(
+            f"Game {game_state.game_id}: Player {player_id} discarding with hand_count={hand_count}, "
+            f"meld_count={len(current_player.melds)}"
+        )
+
+        # 2. 检查牌是否在手牌中
         if tile not in current_player.hand:
             logger.error(
                 f"Failed in discard_tile (player_actions.py): "
@@ -350,7 +355,7 @@ class PlayerActions:
             )
             raise InvalidActionError(f"Tile {tile} not in player's hand in discard_tile(): {player_id}, {tile}")
 
-        # 2. 已胡玩家摸什么打什么检查（血战规则）
+        # 3. 已胡玩家摸什么打什么检查（血战规则）
         # "所摸之牌必须在本回合立即打出，不能替换手中其他牌"
         if current_player.is_hu and current_player.last_drawn_tile is not None:
             if tile != current_player.last_drawn_tile:
@@ -398,6 +403,10 @@ class PlayerActions:
             players=new_players,
             public_discards=new_public_discards,
         )
+
+        # 如果跳过响应处理，直接返回（用于AI循环中先检查人类响应）
+        if skip_responses:
+            return temp_state
 
         # 2. 收集AI响应
         responses = PlayerActions.collect_ai_responses(temp_state, tile, player_id)
@@ -469,11 +478,22 @@ class PlayerActions:
             )
 
         if action_type == ActionType.HU:
-            # Check if player can win with this tile
-            if not WinChecker.is_hu(player, target_tile):
-                raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile}")
+            # 区分自摸和点炮
+            # 自摸：target_tile 已经在手牌中（last_drawn_tile），不需要额外加入
+            # 点炮：target_tile 不在手牌中，需要作为 extra_tile 加入
+            is_self_draw = (player.last_drawn_tile == target_tile)
 
-            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully HU (胡牌)")
+            # Check if player can win with this tile
+            if is_self_draw:
+                # 自摸：验证手牌本身（11张），不需要传 extra_tile
+                if not WinChecker.is_hu(player, extra_tile=None):
+                    raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile} (self-draw)")
+            else:
+                # 点炮：验证手牌 + 目标牌（10 + 1 = 11张）
+                if not WinChecker.is_hu(player, target_tile):
+                    raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile} (from discard)")
+
+            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully HU (胡牌) - {'self-draw' if is_self_draw else 'from discard'}")
 
             # Update player to mark as won
             updated_player = replace(player, is_hu=True)

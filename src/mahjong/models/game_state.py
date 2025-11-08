@@ -101,12 +101,18 @@ class GameState:
             ],
         }
 
-        # 只有请求的玩家能看到自己的完整手牌
+        # 只有请求的玩家能看到自己的完整手牌和最后摸的牌
         if is_viewer:
             data["hand"] = [
                 {"suit": tile.suit.name, "rank": tile.rank}
                 for tile in player.hand
             ]
+            # 最后摸的牌（用于自摸胡牌检测）
+            data["last_drawn_tile"] = (
+                {"suit": player.last_drawn_tile.suit.name, "rank": player.last_drawn_tile.rank}
+                if player.last_drawn_tile
+                else None
+            )
         else:
             # 其他玩家只能看到手牌数量
             data["hand_count"] = len(player.hand)

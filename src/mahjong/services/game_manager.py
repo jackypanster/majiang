@@ -96,7 +96,7 @@ class GameManager:
     @staticmethod
     def end_game(game_state: GameState) -> GameState:
         """
-        结束游戏（流局）
+        结束游戏
 
         简化实现说明：
         - 游戏模式为 1 个真人 + 3 个 AI
@@ -104,8 +104,8 @@ class GameManager:
         - 因此不需要"查花猪"、"查大叫"、"退杠分"等检查
         - 杠分已在发生时即时结算（刮风下雨）
 
-        流局触发条件：
-        - 牌墙摸完（wall 为空）且未满 3 家胡牌
+        游戏结束条件：
+        - 牌墙摸完（wall 为空）
 
         Returns:
             更新后的游戏状态
