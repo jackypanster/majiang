@@ -38,6 +38,10 @@ interface PlayerHandProps {
    */
   melds?: Meld[];
   /**
+   * 玩家胡牌（已经胡过的牌，血战到底模式）
+   */
+  huTiles?: Tile[];
+  /**
    * 选中的牌（埋牌阶段使用）
    */
   selectedTiles?: Tile[];
@@ -85,6 +89,7 @@ interface PlayerHandInternalProps extends PlayerHandProps {
 export function PlayerHand({
   hand,
   melds = [],
+  huTiles = [],
   selectedTiles = [],
   selectable = false,
   onTileClick,
@@ -203,7 +208,7 @@ export function PlayerHand({
 
       {/* 明牌区域（碰/杠） */}
       {melds.length > 0 && (
-        <div>
+        <div className="mb-6">
           <h4 className="text-md font-semibold mb-2">明牌</h4>
           <div className="flex flex-wrap gap-4">
             {melds.map((meld, meldIndex) => (
@@ -226,6 +231,28 @@ export function PlayerHand({
                   {meld.meldType === 'KONG_CONCEALED' && '暗杠'}
                   {meld.meldType === 'KONG_UPGRADE' && '补杠'}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 胡牌区域（已经胡过的牌，血战到底模式） */}
+      {huTiles.length > 0 && (
+        <div>
+          <h4 className="text-md font-semibold mb-2">
+            已胡的牌
+            <span className="ml-2 text-sm text-yellow-600 font-normal">
+              - 血战到底，可多次胡牌
+            </span>
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {huTiles.map((tile, index) => (
+              <div
+                key={index}
+                className="px-4 py-2 bg-yellow-100 text-gray-800 font-semibold rounded-md border-2 border-yellow-400"
+              >
+                {getTileDisplay(tile)}
               </div>
             ))}
           </div>

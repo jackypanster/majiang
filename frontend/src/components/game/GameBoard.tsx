@@ -718,6 +718,7 @@ export function GameBoard() {
             <PlayerHand
               hand={humanPlayer.hand}
               melds={humanPlayer.melds}
+              huTiles={humanPlayer.huTiles}
               selectable={false}
               onDiscard={handleDiscard}
               isPlayerTurn={gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human'}

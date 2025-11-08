@@ -1,9 +1,12 @@
 from typing import Optional, Dict, Tuple
 from collections import Counter
+import logging
 
 from mahjong.models.player import Player
 from mahjong.models.tile import Tile
 from mahjong.constants.enums import Suit
+
+logger = logging.getLogger(__name__)
 
 
 class WinChecker:
@@ -35,15 +38,31 @@ class WinChecker:
         if player.missing_suit:
             for tile in all_tiles:
                 if tile.suit == player.missing_suit:
+                    logger.info(
+                        f"[WinChecker] HU failed: tile {tile} has missing_suit {player.missing_suit}. "
+                        f"all_tiles={all_tiles}"
+                    )
                     return False
 
         # Check 2: Must use at most 2 suits (缺门 = missing one suit)
         suits_used = set(tile.suit for tile in all_tiles)
         if len(suits_used) > 2:
+            logger.info(
+                f"[WinChecker] HU failed: using {len(suits_used)} suits {suits_used}, max allowed is 2. "
+                f"all_tiles={all_tiles}"
+            )
             return False
 
         # Check 3: Valid hand structure (one pair + three sets)
-        return WinChecker._check_hand_structure(all_tiles)
+        structure_valid = WinChecker._check_hand_structure(all_tiles)
+        if not structure_valid:
+            logger.info(
+                f"[WinChecker] HU failed: invalid hand structure. "
+                f"all_tiles ({len(all_tiles)} tiles)={all_tiles}"
+            )
+        else:
+            logger.info(f"[WinChecker] HU success: all checks passed, all_tiles={all_tiles}")
+        return structure_valid
 
     @staticmethod
     def _check_hand_structure(tiles: list[Tile]) -> bool:
@@ -84,8 +103,8 @@ class WinChecker:
         if not counts:
             return True
 
-        # Get first tile to process
-        (suit, rank), count = next(iter(counts.items()))
+        # Get first tile to process (sorted by suit and rank to ensure deterministic order)
+        (suit, rank), count = min(counts.items(), key=lambda x: (x[0][0].value, x[0][1]))
 
         # Try removing a quad (4 same tiles)
         if count >= 4:

@@ -95,6 +95,10 @@ class GameState:
                 }
                 for meld in player.melds
             ],
+            "hu_tiles": [
+                {"suit": tile.suit.name, "rank": tile.rank}
+                for tile in player.hu_tiles
+            ],
             "buried_cards": [
                 {"suit": tile.suit.name, "rank": tile.rank}
                 for tile in player.buried_cards

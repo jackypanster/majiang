@@ -404,7 +404,8 @@ class PlayerActions:
             public_discards=new_public_discards,
         )
 
-        # 如果跳过响应处理，直接返回（用于AI循环中先检查人类响应）
+        # 如果跳过响应处理，只返回打牌后的状态，不摸牌
+        # 摸牌操作由 api.py 在检查人类响应后，通过 process_responses 执行
         if skip_responses:
             return temp_state
 
@@ -483,20 +484,55 @@ class PlayerActions:
             # 点炮：target_tile 不在手牌中，需要作为 extra_tile 加入
             is_self_draw = (player.last_drawn_tile == target_tile)
 
+            # 调试日志：输出详细信息（Issue #75）
+            logger.info(
+                f"[HU Check] Game {game_state.game_id}, Player {player_id}:\n"
+                f"  - is_hu: {player.is_hu}\n"
+                f"  - hand ({len(player.hand)} tiles): {player.hand}\n"
+                f"  - melds ({len(player.melds)}): {player.melds}\n"
+                f"  - hu_tiles ({len(player.hu_tiles)}): {player.hu_tiles}\n"
+                f"  - last_drawn_tile: {player.last_drawn_tile}\n"
+                f"  - target_tile: {target_tile}\n"
+                f"  - is_self_draw: {is_self_draw}"
+            )
+
             # Check if player can win with this tile
             if is_self_draw:
                 # 自摸：验证手牌本身（11张），不需要传 extra_tile
-                if not WinChecker.is_hu(player, extra_tile=None):
+                can_hu = WinChecker.is_hu(player, extra_tile=None)
+                logger.info(f"[HU Check] Self-draw check result: {can_hu}")
+                if not can_hu:
                     raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile} (self-draw)")
             else:
                 # 点炮：验证手牌 + 目标牌（10 + 1 = 11张）
-                if not WinChecker.is_hu(player, target_tile):
+                can_hu = WinChecker.is_hu(player, target_tile)
+                logger.info(f"[HU Check] From-discard check result: {can_hu}")
+                if not can_hu:
                     raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile} (from discard)")
 
             logger.info(f"Game {game_state.game_id}: Player {player_id} successfully HU (胡牌) - {'self-draw' if is_self_draw else 'from discard'}")
 
-            # Update player to mark as won
-            updated_player = replace(player, is_hu=True)
+            # Update player to mark as won and add winning tile to hu_tiles
+            new_hand = list(player.hand)
+            new_hu_tiles = list(player.hu_tiles)
+
+            if is_self_draw:
+                # 自摸：将摸到的牌从手牌移到 hu_tiles（手牌 11→10）
+                # 因为 last_drawn_tile 已经在手牌中，需要移除
+                new_hand.remove(target_tile)
+                new_hu_tiles.append(target_tile)
+            else:
+                # 点炮：将别人打出的牌加入 hu_tiles（手牌保持10张）
+                # target_tile 不在手牌中，直接加入 hu_tiles
+                new_hu_tiles.append(target_tile)
+
+            updated_player = replace(
+                player,
+                is_hu=True,
+                hand=new_hand,
+                hu_tiles=new_hu_tiles,
+                last_drawn_tile=None  # 清除 last_drawn_tile 标记
+            )
             new_players = list(game_state.players)
             new_players[player_index] = updated_player
 
