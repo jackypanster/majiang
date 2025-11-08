@@ -11,10 +11,18 @@ import { logger } from './logger';
 
 /**
  * 检测玩家是否可以碰牌
- * 规则：手牌中至少有2张与目标牌相同的牌
+ * 规则：
+ * 1. 手牌中至少有2张与目标牌相同的牌
+ * 2. 已胡玩家不能碰（手牌已锁定）
  */
 export function canPeng(player: Player, targetTile: Tile): boolean {
   if (!targetTile) return false;
+
+  // 已胡玩家不能碰（手牌已锁定）
+  if (player.isHu) {
+    logger.log('[canPeng] Player already hu, cannot peng', { playerId: player.playerId });
+    return false;
+  }
 
   const matchingTiles = player.hand.filter(
     (tile) => tile.suit === targetTile.suit && tile.rank === targetTile.rank
@@ -25,10 +33,18 @@ export function canPeng(player: Player, targetTile: Tile): boolean {
 
 /**
  * 检测玩家是否可以杠牌（明杠）
- * 规则：手牌中至少有3张与目标牌相同的牌
+ * 规则：
+ * 1. 手牌中至少有3张与目标牌相同的牌
+ * 2. 已胡玩家不能杠（手牌已锁定）
  */
 export function canKong(player: Player, targetTile: Tile): boolean {
   if (!targetTile) return false;
+
+  // 已胡玩家不能杠（手牌已锁定）
+  if (player.isHu) {
+    logger.log('[canKong] Player already hu, cannot kong', { playerId: player.playerId });
+    return false;
+  }
 
   const matchingTiles = player.hand.filter(
     (tile) => tile.suit === targetTile.suit && tile.rank === targetTile.rank

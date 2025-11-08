@@ -24,6 +24,7 @@ export interface Player {
   hand?: Tile[];              // Hand tiles (only visible for current player)
   handCount?: number;         // Hand tile count (visible for other players)
   melds: Meld[];              // Exposed tiles (visible to all)
+  huTiles: Tile[];            // Won tiles (visible to all, displayed separately from hand)
   buriedCards: Tile[];        // Buried cards (visible to all)
   missingSuit: Suit | null;   // Missing suit
   score: number;              // Current score
@@ -44,6 +45,7 @@ export function createPlayer(data: any): Player {
     hand: data.hand ? data.hand.map(createTile) : undefined,
     handCount: data.hand_count,
     melds: (data.melds || []).map(createMeld),
+    huTiles: (data.hu_tiles || []).map(createTile),
     buriedCards: (data.buried_cards || []).map(createTile),
     missingSuit: data.missing_suit ? parseSuit(data.missing_suit) : null,
     score: data.score,

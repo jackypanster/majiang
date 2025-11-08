@@ -3,10 +3,12 @@
  *
  * 显示弃牌堆，按时间倒序堆叠显示
  * - 最新的牌带黄色高亮边框
+ * - 添加出牌动画：AI连续出牌时逐帧显示，每张牌延迟600ms
  * - Phase 4: 暂用文字显示牌面（如 "万1"）
  * - Phase 8: 将使用 Canvas 渲染真实麻将牌
  */
 
+import { useState, useEffect } from 'react';
 import type { Tile } from '@/types';
 
 /**
@@ -40,10 +42,34 @@ interface DiscardPileProps {
 }
 
 export function DiscardPile({ discardPile, maxDisplay }: DiscardPileProps) {
+  // Track how many tiles should be visible (for animation)
+  const [visibleCount, setVisibleCount] = useState(discardPile.length);
+
+  // Detect new tiles and trigger progressive reveal
+  useEffect(() => {
+    if (discardPile.length > visibleCount) {
+      // New tiles added, reveal them one by one
+      const newTilesCount = discardPile.length - visibleCount;
+
+      // Reveal tiles progressively with 600ms delay each
+      for (let i = 0; i < newTilesCount; i++) {
+        setTimeout(() => {
+          setVisibleCount((prev) => prev + 1);
+        }, i * 600);
+      }
+    } else if (discardPile.length < visibleCount) {
+      // Instant update if tiles decreased (e.g., game reset)
+      setVisibleCount(discardPile.length);
+    }
+  }, [discardPile.length, visibleCount]);
+
+  // Only show visible tiles (for animation)
+  const tilesToDisplay = discardPile.slice(0, visibleCount);
+
   // 按时间倒序（最新在前）
   const displayedTiles = maxDisplay
-    ? discardPile.slice(-maxDisplay).reverse()
-    : [...discardPile].reverse();
+    ? tilesToDisplay.slice(-maxDisplay).reverse()
+    : [...tilesToDisplay].reverse();
 
   if (discardPile.length === 0) {
     return (
@@ -64,18 +90,21 @@ export function DiscardPile({ discardPile, maxDisplay }: DiscardPileProps) {
         {displayedTiles.map((tile, index) => {
           // 最新的牌（reverse后index=0）
           const isLatest = index === 0;
+          // Currently revealing tile (just appeared)
+          const isRevealing = discardPile.length - index === visibleCount;
 
           return (
             <div
               key={`${tile.suit}-${tile.rank}-${discardPile.length - index}`}
               className={`
                 px-4 py-2 rounded-md font-semibold text-lg
-                border-2 transition-all
+                border-2 transition-all duration-300
                 ${
                   isLatest
                     ? 'bg-yellow-100 border-yellow-500 shadow-lg'
                     : 'bg-gray-100 border-gray-300'
                 }
+                ${isRevealing ? 'animate-fade-in' : ''}
               `}
               title={isLatest ? '最新弃牌' : ''}
             >
