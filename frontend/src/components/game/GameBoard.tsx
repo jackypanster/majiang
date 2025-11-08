@@ -48,7 +48,6 @@ export function GameBoard() {
 
   const gameId = useGameStore((s) => s.gameId);
   const setGameId = useGameStore((s) => s.setGameId);
-  const setGameState = useGameStore((s) => s.setGameState);
   const setPlayerTurn = useGameStore((s) => s.setPlayerTurn);
   const showToast = useUIStore((s) => s.showToast);
   const showModal = useUIStore((s) => s.showModal);
@@ -89,7 +88,8 @@ export function GameBoard() {
     gameId,
     {
       onSuccess: (data) => {
-        setGameState(data);
+        // ✅ TanStack Query will automatically refetch and update gameStateData
+        // No need to manually set Zustand state here
         clearSelection();
 
         if (data.gamePhase === GamePhase.PLAYING) {
@@ -110,12 +110,8 @@ export function GameBoard() {
     }
   );
 
-  // 同步游戏状态到 Store
-  useEffect(() => {
-    if (gameStateData) {
-      setGameState(gameStateData);
-    }
-  }, [gameStateData, setGameState]);
+  // ✅ Removed: No longer need to sync TanStack Query data to Zustand
+  // Game state is managed solely by TanStack Query to avoid cache conflicts
 
   // T052: 回合状态判断 - 更新 isPlayerTurn
   useEffect(() => {
@@ -233,7 +229,7 @@ export function GameBoard() {
       });
 
       setGameId(response.gameId);
-      setGameState(response.state);
+      // ✅ TanStack Query will automatically fetch game state after gameId is set
 
       showToast({
         type: 'success',

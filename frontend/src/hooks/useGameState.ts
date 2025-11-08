@@ -70,8 +70,8 @@ export function useGameState(
     refetchOnReconnect: false,
     // 数据永远视为过时（依赖轮询更新）
     staleTime: 0,
-    // 缓存时间：5分钟
-    gcTime: 5 * 60 * 1000,
+    // 缓存时间：10秒（快速清理过期数据，避免多个游戏会话混淆）
+    gcTime: 10 * 1000,
     // 重试策略：404错误不重试（游戏已结束），其他错误重试1次
     retry: (failureCount, error: any) => {
       // 404错误表示游戏已结束并被清理，不需要重试
