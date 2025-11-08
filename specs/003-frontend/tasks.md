@@ -48,51 +48,51 @@
 
 ### 2.1 TypeScript 类型定义 (基于 data-model.md)
 
-- [ ] T013 [P] 定义 Tile 类型和工具函数 frontend/src/types/tile.ts (Suit 枚举, Tile 接口, createTile, getTileId, tilesEqual)
-- [ ] T014 [P] 定义 Meld 类型 frontend/src/types/meld.ts (MeldType 枚举, Meld 接口, createMeld)
-- [ ] T015 [P] 定义 Player 类型 frontend/src/types/player.ts (Player 接口, createPlayer)
-- [ ] T016 [P] 定义 GameState 类型 frontend/src/types/game.ts (GamePhase 枚举, GameState 接口, createGameState)
-- [ ] T017 [P] 定义 ActionType 和 PlayerResponse 类型 frontend/src/types/action.ts (ActionType 枚举, PlayerResponse 接口, getActionPriority)
-- [ ] T018 [P] 定义 API 请求/响应类型 frontend/src/types/api.ts (CreateGameRequest/Response, PlayerActionRequest, GameStateResponse, ErrorResponse, WinDetail)
-- [ ] T019 [P] 定义 UI 状态类型 frontend/src/types/ui.ts (ToastConfig, ToastMessage, ModalConfig)
-- [ ] T020 创建统一类型导出 frontend/src/types/index.ts (避免循环依赖)
+- [X] T013 [P] 定义 Tile 类型和工具函数 frontend/src/types/tile.ts (Suit 枚举, Tile 接口, createTile, getTileId, tilesEqual)
+- [X] T014 [P] 定义 Meld 类型 frontend/src/types/meld.ts (MeldType 枚举, Meld 接口, createMeld)
+- [X] T015 [P] 定义 Player 类型 frontend/src/types/player.ts (Player 接口, createPlayer)
+- [X] T016 [P] 定义 GameState 类型 frontend/src/types/game.ts (GamePhase 枚举, GameState 接口, createGameState)
+- [X] T017 [P] 定义 ActionType 和 PlayerResponse 类型 frontend/src/types/action.ts (ActionType 枚举, PlayerResponse 接口, getActionPriority)
+- [X] T018 [P] 定义 API 请求/响应类型 frontend/src/types/api.ts (CreateGameRequest/Response, PlayerActionRequest, GameStateResponse, ErrorResponse, WinDetail)
+- [X] T019 [P] 定义 UI 状态类型 frontend/src/types/ui.ts (ToastConfig, ToastMessage, ModalConfig)
+- [X] T020 创建统一类型导出 frontend/src/types/index.ts (避免循环依赖)
 
 ### 2.2 API 客户端层 (基于 contracts/frontend-backend-api.yaml)
 
-- [ ] T021 配置 Axios 实例 frontend/src/services/apiClient.ts (baseURL, timeout, 请求/响应拦截器, 错误处理)
-- [ ] T022 实现游戏 API 客户端 frontend/src/services/api/gameApi.ts (createGame, getGameState, submitAction, 字段名转换 snake_case → camelCase)
-- [ ] T023 创建 API 统一导出 frontend/src/services/api/index.ts
+- [X] T021 配置 Axios 实例 frontend/src/services/apiClient.ts (baseURL, timeout, 请求/响应拦截器, 错误处理)
+- [X] T022 实现游戏 API 客户端 frontend/src/services/api/gameApi.ts (createGame, getGameState, submitAction, 字段名转换 snake_case → camelCase)
+- [X] T023 创建 API 统一导出 frontend/src/services/api/index.ts
 
 ### 2.3 Zustand 状态管理 (基于 research.md 决策)
 
-- [ ] T024 [P] 实现 UI Store frontend/src/stores/uiStore.ts (toast, modal, selectedTiles 状态管理, showToast, hideToast, showModal, hideModal, selectTile, clearSelection)
-- [ ] T025 [P] 实现 Game Store frontend/src/stores/gameStore.ts (gameId, gameState, isPlayerTurn 状态管理, setGameId, setGameState, setPlayerTurn, reset)
-- [ ] T026 创建 Store 统一导出 frontend/src/stores/index.ts
+- [X] T024 [P] 实现 UI Store frontend/src/stores/uiStore.ts (toast, modal, selectedTiles 状态管理, showToast, hideToast, showModal, hideModal, selectTile, clearSelection)
+- [X] T025 [P] 实现 Game Store frontend/src/stores/gameStore.ts (gameId, gameState, isPlayerTurn 状态管理, setGameId, setGameState, setPlayerTurn, reset)
+- [X] T026 创建 Store 统一导出 frontend/src/stores/index.ts
 
 ### 2.4 通用组件
 
-- [ ] T027 [P] 实现 Button 组件 frontend/src/components/common/Button.tsx (props: onClick, disabled, variant, children, className)
-- [ ] T028 [P] 实现 Modal 组件 frontend/src/components/common/Modal.tsx (props: title, content, confirmText, cancelText, onConfirm, onCancel, closable)
-- [ ] T029 [P] 实现 Toast 组件 frontend/src/components/common/Toast.tsx (props: message, type, duration, 自动隐藏逻辑)
-- [ ] T030 [P] 实现 ErrorBoundary 组件 frontend/src/components/common/ErrorBoundary.tsx (捕获 React 渲染错误, 显示友好错误界面)
+- [X] T027 [P] 实现 Button 组件 frontend/src/components/common/Button.tsx (props: onClick, disabled, variant, children, className)
+- [X] T028 [P] 实现 Modal 组件 frontend/src/components/common/Modal.tsx (props: title, content, confirmText, cancelText, onConfirm, onCancel, closable)
+- [X] T029 [P] 实现 Toast 组件 frontend/src/components/common/Toast.tsx (props: message, type, duration, 自动隐藏逻辑)
+- [X] T030 [P] 实现 ErrorBoundary 组件 frontend/src/components/common/ErrorBoundary.tsx (捕获 React 渲染错误, 显示友好错误界面)
 
 ### 2.5 Canvas 渲染器基础类 (基于 research.md 性能优化策略)
 
-- [ ] T031 实现 TileRenderer 骨架类 frontend/src/renderers/TileRenderer.ts (preRenderTiles 方法签名, drawCachedTile 方法签名, tileCache 缓存 Map, 暂不实现具体绘制)
-- [ ] T032 [P] 实现 Canvas 工具函数 frontend/src/utils/canvasUtils.ts (坐标转换, 高清屏适配, 整数坐标处理)
+- [X] T031 实现 TileRenderer 骨架类 frontend/src/renderers/TileRenderer.ts (preRenderTiles 方法签名, drawCachedTile 方法签名, tileCache 缓存 Map, 暂不实现具体绘制)
+- [X] T032 [P] 实现 Canvas 工具函数 frontend/src/utils/canvasUtils.ts (坐标转换, 高清屏适配, 整数坐标处理)
 
 ### 2.6 工具函数
 
-- [ ] T033 [P] 实现麻将牌工具函数 frontend/src/utils/tileUtils.ts (排序, 比较, 分组按花色)
-- [ ] T034 [P] 定义常量 frontend/src/utils/constants.ts (API_BASE_URL, POLLING_INTERVAL, DEBUG_MODE, 牌面尺寸常量)
-- [ ] T034a [P] 创建中文文案常量文件 frontend/src/utils/messages.ts (所有界面文案: 按钮文字, 提示信息, 错误消息, 遵循 FR-018 中文要求)
-- [ ] T035 [P] 实现通用辅助函数 frontend/src/utils/helpers.ts (防抖, 节流, 格式化数字)
-- [ ] T035a [P] 实现 Logger 工具 frontend/src/utils/logger.ts (封装 console API, 包含 game_id/player_id 上下文, log/error/warn 方法, 开发环境 INFO 级别, 生产环境 ERROR 级别)
+- [X] T033 [P] 实现麻将牌工具函数 frontend/src/utils/tileUtils.ts (排序, 比较, 分组按花色)
+- [X] T034 [P] 定义常量 frontend/src/utils/constants.ts (API_BASE_URL, POLLING_INTERVAL, DEBUG_MODE, 牌面尺寸常量)
+- [X] T034a [P] 创建中文文案常量文件 frontend/src/utils/messages.ts (所有界面文案: 按钮文字, 提示信息, 错误消息, 遵循 FR-018 中文要求)
+- [X] T035 [P] 实现通用辅助函数 frontend/src/utils/helpers.ts (防抖, 节流, 格式化数字)
+- [X] T035a [P] 实现 Logger 工具 frontend/src/utils/logger.ts (封装 console API, 包含 game_id/player_id 上下文, log/error/warn 方法, 开发环境 INFO 级别, 生产环境 ERROR 级别)
 
 ### 2.7 全局样式
 
-- [ ] T036 [P] 配置 Tailwind CSS 入口 frontend/src/styles/index.css (导入 Tailwind 基础样式, 自定义全局样式)
-- [ ] T037 [P] 定义 CSS 变量 frontend/src/styles/variables.css (麻将牌颜色, 间距, 动画时长)
+- [X] T036 [P] 配置 Tailwind CSS 入口 frontend/src/styles/index.css (导入 Tailwind 基础样式, 自定义全局样式)
+- [X] T037 [P] 定义 CSS 变量 frontend/src/styles/variables.css (麻将牌颜色, 间距, 动画时长)
 
 **Checkpoint**: 基础设施完成,用户故事开发可并行开始
 
@@ -106,16 +106,16 @@
 
 ### 实现任务
 
-- [ ] T038 [US1] 实现 useGameState Hook frontend/src/hooks/useGameState.ts (使用 TanStack Query, 条件轮询 refetchInterval, 仅 AI 回合启用 500ms 轮询)
-- [ ] T039 [US1] 实现 usePlayerAction Hook frontend/src/hooks/usePlayerAction.ts (useMutation 封装 gameApi.submitAction, 成功后 invalidateQueries 刷新状态)
-- [ ] T040 [P] [US1] 实现 useTileSelection Hook frontend/src/hooks/useTileSelection.ts (选中/取消选中逻辑, 最多选3张限制, 返回 selectedTiles 和 toggleTile)
-- [ ] T041 [US1] 实现 GameBoard 容器组件 frontend/src/components/game/GameBoard.tsx (游戏主界面容器, 包含 PlayerHand, AIPlayer, DiscardPile, GameInfo, ActionButtons 子组件)
-- [ ] T042 [US1] 实现 PlayerHand 组件 frontend/src/components/game/PlayerHand.tsx (显示玩家手牌, 支持点击选中/取消, 高亮显示选中状态, 暂用文字显示牌面如 "万1")
-- [ ] T043 [US1] 实现埋牌验证逻辑 frontend/src/utils/buryValidation.ts (检查3张同花色, 检查牌是否在手中, 返回验证结果和错误消息)
-- [ ] T044 [US1] 实现埋牌提交流程 GameBoard.tsx (用户选择3张牌→点击"确认埋牌"→前端校验→调用 API→显示缺门→进入 PLAYING 阶段)
-- [ ] T045 [US1] 实现"开始游戏"按钮 GameBoard.tsx (点击后调用 createGame API, 设置 gameId 到 Store, 显示加载状态)
-- [ ] T046 [US1] 添加埋牌阶段错误处理 GameBoard.tsx (网络错误显示 Modal, 验证错误显示 Toast, 提供"重试"按钮)
-- [ ] T047 [US1] 实现窗口尺寸检测 GameBoard.tsx (useEffect 监听 resize, 窗口 <1280x720 时显示"请调整窗口大小"提示)
+- [X] T038 [US1] 实现 useGameState Hook frontend/src/hooks/useGameState.ts (使用 TanStack Query, 条件轮询 refetchInterval, 仅 AI 回合启用 500ms 轮询)
+- [X] T039 [US1] 实现 usePlayerAction Hook frontend/src/hooks/usePlayerAction.ts (useMutation 封装 gameApi.submitAction, 成功后 invalidateQueries 刷新状态)
+- [X] T040 [P] [US1] 实现 useTileSelection Hook frontend/src/hooks/useTileSelection.ts (选中/取消选中逻辑, 最多选3张限制, 返回 selectedTiles 和 toggleTile)
+- [X] T041 [US1] 实现 GameBoard 容器组件 frontend/src/components/game/GameBoard.tsx (游戏主界面容器, 包含 PlayerHand, AIPlayer, DiscardPile, GameInfo, ActionButtons 子组件)
+- [X] T042 [US1] 实现 PlayerHand 组件 frontend/src/components/game/PlayerHand.tsx (显示玩家手牌, 支持点击选中/取消, 高亮显示选中状态, 暂用文字显示牌面如 "万1")
+- [X] T043 [US1] 实现埋牌验证逻辑 frontend/src/utils/buryValidation.ts (检查3张同花色, 检查牌是否在手中, 返回验证结果和错误消息)
+- [X] T044 [US1] 实现埋牌提交流程 GameBoard.tsx (用户选择3张牌→点击"确认埋牌"→前端校验→调用 API→显示缺门→进入 PLAYING 阶段)
+- [X] T045 [US1] 实现"开始游戏"按钮 GameBoard.tsx (点击后调用 createGame API, 设置 gameId 到 Store, 显示加载状态)
+- [X] T046 [US1] 添加埋牌阶段错误处理 GameBoard.tsx (网络错误显示 Modal, 验证错误显示 Toast, 提供"重试"按钮)
+- [X] T047 [US1] 实现窗口尺寸检测 GameBoard.tsx (useEffect 监听 resize, 窗口 <1280x720 时显示"请调整窗口大小"提示)
 
 **Checkpoint**: 用户故事1完成,可独立测试埋牌流程
 
@@ -129,14 +129,14 @@
 
 ### 实现任务
 
-- [ ] T048 [US2] 实现 DiscardPile 组件 frontend/src/components/game/DiscardPile.tsx (显示弃牌堆, 按时间倒序堆叠, 最新的牌带黄色高亮边框, 暂用文字显示牌面)
-- [ ] T049 [US2] 实现出牌逻辑 PlayerHand.tsx (玩家回合时点击手牌触发 discard, 优先打出缺门牌校验, 调用 submitAction API)
-- [ ] T050 [US2] 实现缺门优先出牌校验 frontend/src/utils/discardValidation.ts (检查手中是否有缺门牌, 如有则禁止打出非缺门牌)
-- [ ] T051 [US2] 实现 AI 回合轮询逻辑 useGameState.ts (isPlayerTurn=false 时启用 500ms 轮询, isPlayerTurn=true 时停止轮询, refetchIntervalInBackground: false)
-- [ ] T052 [US2] 实现回合状态判断 GameBoard.tsx (根据 currentPlayerIndex 和 gameState.players[0].playerId 判断是否玩家回合, 更新 Store.setPlayerTurn)
-- [ ] T053 [US2] 实现防重复提交逻辑 usePlayerAction.ts (mutation.isLoading 时禁用手牌点击, 响应完成后恢复)
-- [ ] T054 [US2] 实现出牌后状态同步 usePlayerAction.ts (出牌成功后 invalidateQueries 立即刷新, 不依赖轮询)
-- [ ] T055 [US2] 添加出牌错误处理 GameBoard.tsx (非法出牌显示 Toast 提示, 后端错误显示 Modal)
+- [X] T048 [US2] 实现 DiscardPile 组件 frontend/src/components/game/DiscardPile.tsx (显示弃牌堆, 按时间倒序堆叠, 最新的牌带黄色高亮边框, 暂用文字显示牌面)
+- [X] T049 [US2] 实现出牌逻辑 PlayerHand.tsx (玩家回合时点击手牌触发 discard, 优先打出缺门牌校验, 调用 submitAction API)
+- [X] T050 [US2] 实现缺门优先出牌校验 frontend/src/utils/discardValidation.ts (检查手中是否有缺门牌, 如有则禁止打出非缺门牌)
+- [X] T051 [US2] 实现 AI 回合轮询逻辑 useGameState.ts (isPlayerTurn=false 时启用 500ms 轮询, isPlayerTurn=true 时停止轮询, refetchIntervalInBackground: false)
+- [X] T052 [US2] 实现回合状态判断 GameBoard.tsx (根据 currentPlayerIndex 和 gameState.players[0].playerId 判断是否玩家回合, 更新 Store.setPlayerTurn)
+- [X] T053 [US2] 实现防重复提交逻辑 usePlayerAction.ts (mutation.isLoading 时禁用手牌点击, 响应完成后恢复)
+- [X] T054 [US2] 实现出牌后状态同步 usePlayerAction.ts (出牌成功后 invalidateQueries 立即刷新, 不依赖轮询)
+- [X] T055 [US2] 添加出牌错误处理 GameBoard.tsx (非法出牌显示 Toast 提示, 后端错误显示 Modal)
 
 **Checkpoint**: 用户故事2完成,可独立测试出牌和AI响应流程
 
@@ -150,17 +150,17 @@
 
 ### 实现任务
 
-- [ ] T056 [US3] 实现 ActionButtons 组件 frontend/src/components/game/ActionButtons.tsx (显示 碰/杠/胡/过 按钮, 根据 availableActions 动态渲染, 胡按钮高亮显示)
-- [ ] T057 [US3] 实现可用动作检测逻辑 GameBoard.tsx (检测 AI 出牌后是否触发玩家响应, 根据后端返回的 availableActions 显示按钮)
-- [ ] T058 [US3] 实现碰牌动作提交 ActionButtons.tsx (点击"碰"→调用 submitAction API action='peng', 传入目标牌)
-- [ ] T059 [US3] 实现杠牌动作提交 ActionButtons.tsx (点击"杠"→调用 submitAction API action='gang', 传入目标牌)
-- [ ] T060 [US3] 实现胡牌动作提交 ActionButtons.tsx (点击"胡"→调用 submitAction API action='hu', 传入目标牌)
-- [ ] T061 [US3] 实现跳过动作提交 ActionButtons.tsx (点击"过"→调用 submitAction API action='skip')
-- [ ] T062 [US3] 实现明牌显示 PlayerHand.tsx (在手牌下方显示 melds 区域, 渲染 player.melds 数组, 显示碰/杠组合, 暂用文字显示)
-- [ ] T063 [US3] 实现胡牌结果弹窗 GameBoard.tsx (gamePhase='ENDED' 时显示 Modal, 展示番数、得分变化、是否血战继续, 自动停留3秒后"确认"按钮可点击)
-- [ ] T064 [US3] 实现胡牌后状态更新 GameBoard.tsx (玩家点击"确认"→关闭 Modal→根据 gamePhase 决定是继续游戏还是结束)
-- [ ] T065 [US3] 添加响应动作错误处理 ActionButtons.tsx (动作失败显示 Toast, 超时显示 Modal)
-- [ ] T066 [US3] 实现操作按钮无超时逻辑 ActionButtons.tsx (按钮显示后无倒计时, 等待玩家手动点击)
+- [X] T056 [US3] 实现 ActionButtons 组件 frontend/src/components/game/ActionButtons.tsx (显示 碰/杠/胡/过 按钮, 根据 availableActions 动态渲染, 胡按钮高亮显示)
+- [X] T057 [US3] 实现可用动作检测逻辑 GameBoard.tsx (检测 AI 出牌后是否触发玩家响应, 根据后端返回的 availableActions 显示按钮)
+- [X] T058 [US3] 实现碰牌动作提交 ActionButtons.tsx (点击"碰"→调用 submitAction API action='peng', 传入目标牌)
+- [X] T059 [US3] 实现杠牌动作提交 ActionButtons.tsx (点击"杠"→调用 submitAction API action='gang', 传入目标牌)
+- [X] T060 [US3] 实现胡牌动作提交 ActionButtons.tsx (点击"胡"→调用 submitAction API action='hu', 传入目标牌)
+- [X] T061 [US3] 实现跳过动作提交 ActionButtons.tsx (点击"过"→调用 submitAction API action='skip')
+- [X] T062 [US3] 实现明牌显示 PlayerHand.tsx (在手牌下方显示 melds 区域, 渲染 player.melds 数组, 显示碰/杠组合, 暂用文字显示)
+- [X] T063 [US3] 实现胡牌结果弹窗 GameBoard.tsx (gamePhase='ENDED' 时显示 Modal, 展示番数、得分变化、是否血战继续, 自动停留3秒后"确认"按钮可点击)
+- [X] T064 [US3] 实现胡牌后状态更新 GameBoard.tsx (玩家点击"确认"→关闭 Modal→根据 gamePhase 决定是继续游戏还是结束)
+- [X] T065 [US3] 添加响应动作错误处理 ActionButtons.tsx (动作失败显示 Toast, 超时显示 Modal)
+- [X] T066 [US3] 实现操作按钮无超时逻辑 ActionButtons.tsx (按钮显示后无倒计时, 等待玩家手动点击)
 
 **Checkpoint**: 用户故事3完成,可独立测试碰杠胡操作
 

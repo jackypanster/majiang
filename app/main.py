@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import GameSession
 
@@ -21,6 +22,18 @@ app = FastAPI(
     title="血战到底麻将 Backend",
     description="FastAPI HTTP backend for Blood Battle Mahjong",
     version="1.0.0"
+)
+
+# CORS middleware configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev server
+        "http://127.0.0.1:5173",  # Alternative localhost
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 # Global game storage

@@ -1,0 +1,38 @@
+/* Tailwind CSS base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global custom styles */
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* CSS variables for mahjong game theme */
+  --color-tile-wan: #1e3a8a;
+  --color-tile-tiao: #166534;
+  --color-tile-tong: #991b1b;
+
+  /* Animation durations */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  /* Mahjong tile dimensions */
+  --tile-width: 60px;
+  --tile-height: 80px;
+  --tile-gap: 8px;
+}
+
+body {
+  margin: 0;
+  min-width: 1280px;
+  min-height: 720px;
+  @apply bg-gray-100;
+}
+
+/* Remove default button styles to allow Tailwind styling */
+button {
+  all: unset;
+}
