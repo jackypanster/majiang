@@ -55,39 +55,21 @@ export function canKong(player: Player, targetTile: Tile): boolean {
 export function canHu(player: Player, targetTile: Tile, isPlayerTurn: boolean): boolean {
   if (!targetTile) return false;
 
-  // 计算预期手牌数量，需要考虑碰/杠牌
-  // 基础手牌：10张（埋牌后，闲家）
-  // 碰牌：每次减2张（从手牌中移除2张，形成明牌）
-  // 杠牌：每次减3张（从手牌中移除3张，形成明牌，然后补摸1张）
-  let expectedHandCount = 10;  // 基础：闲家埋牌后10张
+  // ✅ 简化逻辑：前端只做基本预检测，复杂的结构检查由后端负责
+  // 这样可以避免前后端逻辑不一致导致的bug（例如Issue #69）
 
-  // 根据明牌数量调整预期手牌数量
-  player.melds.forEach(meld => {
-    if (meld.meldType === 'PONG') {
-      expectedHandCount -= 2;  // 碰：手牌减2
-    } else if (meld.meldType === 'KONG_EXPOSED' || meld.meldType === 'KONG_CONCEALED' || meld.meldType === 'KONG_UPGRADE') {
-      expectedHandCount -= 3;  // 杠：手牌减3（已包含补摸的1张）
-    }
-  });
-
-  // 允许 expectedHandCount（点炮）或 expectedHandCount + 1（自摸刚摸牌）
-  if (player.hand.length !== expectedHandCount && player.hand.length !== expectedHandCount + 1) {
-    logger.log('[canHu] Hand count mismatch', {
+  // 基本检查 1：目标牌不能是缺门花色
+  if (player.missingSuit && targetTile.suit === player.missingSuit) {
+    logger.log('[canHu] Cannot HU - target tile is missing suit', {
       playerId: player.playerId,
-      actualHandCount: player.hand.length,
-      expectedHandCount,
-      melds: player.melds,
+      missingSuit: player.missingSuit,
+      targetTile,
     });
     return false;
   }
 
-  // 检查目标牌是否是缺门花色（不能用缺门牌胡）
-  if (player.missingSuit && targetTile.suit === player.missingSuit) {
-    return false;
-  }
-
-  // ✅ 新增检查：手牌中不能包含缺门花色的牌
-  // 规则：胡牌时任何暗牌、明牌及埋牌都不得包含自己的缺门花色
+  // 基本检查 2：手牌中不能包含缺门花色的牌
+  // 规则：胡牌时任何暗牌都不得包含自己的缺门花色
   if (player.missingSuit) {
     const hasMissingSuitTiles = player.hand.some(tile => tile.suit === player.missingSuit);
     if (hasMissingSuitTiles) {
@@ -100,8 +82,17 @@ export function canHu(player: Player, targetTile: Tile, isPlayerTurn: boolean): 
     }
   }
 
-  // 其他复杂的胡牌判断由后端处理
-  // 这里返回true表示"可能可以胡"，让玩家尝试，后端会做最终验证
+  // ✅ 不再检查手牌数量和牌型结构
+  // 原因：这些检查容易出错，且与后端逻辑不一致
+  // 让后端的 WinChecker.is_hu() 做最终判断
+
+  logger.log('[canHu] Basic checks passed, returning true (backend will do final validation)', {
+    playerId: player.playerId,
+    targetTile,
+    handCount: player.hand.length,
+    meldCount: player.melds.length,
+  });
+
   return true;
 }
 
