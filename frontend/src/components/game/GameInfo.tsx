@@ -124,7 +124,6 @@ export function GameInfo({
 
         {/* 当前回合 */}
         <div className="flex items-center gap-1 text-xs">
-          <span className="text-lg leading-none">👉</span>
           <span className="font-bold text-yellow-700">
             {currentPlayer ? getPlayerName(currentPlayer.playerId) : '—'}
           </span>
