@@ -177,9 +177,11 @@ export function PlayerArea({
     >
       {/* 玩家信息栏 */}
       <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} items-center gap-2 text-sm`}>
-        <div className="font-bold text-gray-800">
-          {isHuman ? '你' : player.playerId}
-        </div>
+        {!isHuman && (
+          <div className="font-bold text-gray-800">
+            {player.playerId}
+          </div>
+        )}
         {player.missingSuit && (
           <div className="text-red-600 font-semibold">
             缺{getSuitDisplay(player.missingSuit)}
