@@ -59,6 +59,10 @@ interface PlayerHandProps {
    * 玩家是否已胡牌（血战到底规则）
    */
   isHu?: boolean;
+  /**
+   * 最后摸的牌（用于"摸什么打什么"高亮显示）
+   */
+  lastDrawnTile?: Tile | null;
 }
 
 interface PlayerHandInternalProps extends PlayerHandProps {
@@ -85,6 +89,7 @@ export function PlayerHand({
   missingSuit = null,
   disabled = false,
   isHu = false,
+  lastDrawnTile = null,
   isSelectedByIndex,
   onTileClickWithIndex,
 }: PlayerHandInternalProps) {
@@ -222,23 +227,35 @@ export function PlayerHand({
                 : selectedTileIds.has(tileId);
               const key = `${tileId}-${originalIndex}`;
 
+              // 判断是否是最后摸的牌（用于"摸什么打什么"模式）
+              const isLastDrawn = lastDrawnTile &&
+                tile.suit === lastDrawnTile.suit &&
+                tile.rank === lastDrawnTile.rank;
+
+              // 已胡牌模式下：只能打出最后摸的牌，其他牌锁定显示为灰色
+              const isLockedTile = isHu && !isLastDrawn;
+              const canClick = !disabled && !isLockedTile && (selectable || isPlayerTurn);
+
               return (
                 <button
                   key={key}
                   onClick={() => handleTileClick(tile, originalIndex)}
-                  disabled={disabled || (!selectable && !isPlayerTurn)}
+                  disabled={!canClick}
                   className={`
                     px-4 py-2 rounded-md font-semibold text-lg
                     border-2 transition-all
                     ${
                       isSelected
                         ? 'bg-blue-500 text-white border-blue-600 transform -translate-y-2'
-                        : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                        : isLockedTile
+                          ? 'bg-gray-300 text-gray-500 border-gray-400 opacity-50'
+                          : isLastDrawn && isHu
+                            ? 'bg-green-100 text-green-800 border-green-500 ring-2 ring-green-400'
+                            : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
                     }
-                    ${disabled || (!selectable && !isPlayerTurn) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
-                    ${disabled || (!selectable && !isPlayerTurn) ? 'hover:bg-gray-100' : ''}
+                    ${canClick ? 'cursor-pointer' : 'cursor-not-allowed'}
                   `}
-                  title={tileId}
+                  title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn && isHu ? `${tileId} (可出牌)` : tileId}
                 >
                   {getTileDisplay(tile)}
                 </button>

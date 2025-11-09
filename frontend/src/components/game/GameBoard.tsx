@@ -712,6 +712,7 @@ export function GameBoard() {
                 missingSuit={humanPlayer.missingSuit}
                 disabled={isSubmitting}
                 isHu={humanPlayer.isHu}
+                lastDrawnTile={humanPlayer.lastDrawnTile}
               />
             )}
 
