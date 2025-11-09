@@ -8,25 +8,7 @@
 
 import { getTileId } from '@/types';
 import type { Tile, Meld } from '@/types';
-
-/**
- * 将花色枚举转换为中文显示
- */
-function getSuitDisplay(suit: string): string {
-  const suitMap: Record<string, string> = {
-    WAN: '万',
-    TIAO: '条',
-    TONG: '筒',
-  };
-  return suitMap[suit] || suit;
-}
-
-/**
- * 获取牌面显示文字
- */
-function getTileDisplay(tile: Tile): string {
-  return `${getSuitDisplay(tile.suit)}${tile.rank}`;
-}
+import { getTileDisplay } from '@/utils/tileUtils';
 
 interface PlayerHandProps {
   /**
