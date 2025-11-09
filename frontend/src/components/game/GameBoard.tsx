@@ -16,6 +16,7 @@ import { PlayerArea } from './PlayerArea';
 import { CenterArea } from './CenterArea';
 import { ActionButtons } from './ActionButtons';
 import { KongButtons } from './KongButtons';
+import { GameInfo } from './GameInfo';
 import { useUIStore, useGameStore } from '@/stores';
 import { gameApi } from '@/services/api';
 import { useGameState } from '@/hooks/useGameState';
@@ -618,10 +619,10 @@ export function GameBoard() {
 
   // 游戏进行中阶段 - Grid四方位布局
   return (
-    <div className="h-screen bg-gray-100 overflow-hidden flex flex-col relative">
+    <div className="h-screen bg-gradient-to-br from-green-50 to-green-100 overflow-hidden relative">
       {/* Kong Buttons - 主动杠牌（暗杠/补杠） - 固定在左上角 */}
       {kongOptions.length > 0 && (
-        <div className="absolute top-20 left-4 z-50">
+        <div className="absolute top-4 left-4 z-50">
           <KongButtons
             gameId={gameId}
             playerId="human"
@@ -644,37 +645,28 @@ export function GameBoard() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="bg-white shadow-md p-3">
-        <div className="flex justify-between items-center max-w-full px-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">血战到底麻将</h2>
-            <p className="text-xs text-gray-500">游戏ID: {gameId}</p>
-          </div>
-          <Button
-            onClick={() => {
-              if (confirm('确定要重新开始吗？')) {
-                window.location.reload();
-              }
-            }}
-            variant="secondary"
-          >
-            重新开始
-          </Button>
-        </div>
+      {/* GameInfo - 游戏信息面板 - 固定在右上角 */}
+      <div className="absolute top-4 right-4 z-40">
+        <GameInfo
+          currentPlayerIndex={gameStateData.currentPlayerIndex}
+          players={gameStateData.players}
+          wallRemaining={gameStateData.wallRemainingCount}
+          gamePhase={gamePhase}
+        />
       </div>
 
       {/* Mahjong Table Grid - 使用 grid-template-areas 精确布局 */}
       <div
-        className="flex-1 grid gap-3 p-0 overflow-hidden bg-gradient-to-br from-green-50 to-green-100"
+        className="grid gap-3 p-3"
         style={{
+          height: '100vh',
           gridTemplateAreas: `
             ".    ai2   .   "
             "ai1  center ai3"
             ".    human .   "
           `,
           gridTemplateColumns: 'min-content 1fr min-content',
-          gridTemplateRows: 'auto 1fr auto'
+          gridTemplateRows: '80px minmax(200px, 1fr) 160px'
         }}
       >
         {/* Top-center: AI_2 */}
@@ -684,6 +676,7 @@ export function GameBoard() {
               player={aiPlayers[1]}
               position="top"
               isCurrentTurn={gameStateData.currentPlayerIndex === gameStateData.players.findIndex(p => p.playerId === aiPlayers[1].playerId)}
+              gamePhase={gamePhase}
             />
           )}
         </div>
@@ -695,6 +688,7 @@ export function GameBoard() {
               player={aiPlayers[0]}
               position="left"
               isCurrentTurn={gameStateData.currentPlayerIndex === gameStateData.players.findIndex(p => p.playerId === aiPlayers[0].playerId)}
+              gamePhase={gamePhase}
             />
           )}
         </div>
@@ -705,7 +699,6 @@ export function GameBoard() {
             publicDiscards={gameStateData.publicDiscards || []}
             wallRemaining={gameStateData.wallRemainingCount}
             gamePhase={gamePhase}
-            maxDisplay={24}
           />
         </div>
 
@@ -716,14 +709,15 @@ export function GameBoard() {
               player={aiPlayers[2]}
               position="right"
               isCurrentTurn={gameStateData.currentPlayerIndex === gameStateData.players.findIndex(p => p.playerId === aiPlayers[2].playerId)}
+              gamePhase={gamePhase}
             />
           )}
         </div>
 
         {/* Bottom-center: Human player */}
-        <div className="flex flex-col gap-3 items-center justify-end pb-3" style={{ gridArea: 'human' }}>
+        <div style={{ gridArea: 'human' }}>
           {/* 主区域：手牌 + 响应按钮 - 水平排列 */}
-          <div className="flex flex-row gap-6 items-start bg-white rounded-lg shadow-md p-6 w-full max-w-full">
+          <div className="flex flex-row gap-6 items-start bg-white p-6 rounded-lg">
             {/* 左：埋牌 + 明牌 + 手牌 + 已胡牌（PlayerHand组件） */}
             {humanPlayer.hand && (
               <PlayerHand
