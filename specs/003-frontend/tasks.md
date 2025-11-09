@@ -182,7 +182,7 @@
 - [X] T072 [US4] 实现 AI 明牌显示 PlayerArea.tsx (渲染 player.melds, 显示碰/杠组合, 暂用文字显示牌面)
 - [X] T073 [US4] 实现 AI 埋牌显示 PlayerArea.tsx (渲染 player.buriedCards, 埋牌后可见, 暂用文字显示)
 - [X] T074 [US4] 实现缺门花色标识 PlayerArea.tsx (显示 player.missingSuit, 如 "缺: 筒", 带花色图标)
-- [ ] T075 [US4] 实现弃牌堆历史显示 DiscardPile.tsx (显示 publicDiscards 完整历史, 按时间倒序堆叠, 最新的牌在最上层)
+- [X] T075 [US4] 实现弃牌堆历史显示 DiscardPile.tsx (显示 publicDiscards 完整历史, 按时间倒序堆叠, 最新的牌在最上层)
 
 **Checkpoint**: 用户故事4完成,游戏信息完整显示
 
