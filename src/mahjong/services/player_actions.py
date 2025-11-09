@@ -607,7 +607,20 @@ class PlayerActions:
             new_players = list(game_state.players)
             new_players[player_index] = updated_player
 
-            return replace(game_state, players=new_players)
+            # ✅ 修复：胡牌后切换到下一个玩家（血战到底：继续游戏）
+            # 根据规则："胡牌后轮到下一个玩家，游戏继续"
+            next_player_index = (player_index + 1) % 4
+            logger.info(
+                f"[HU AFTER] Switching to next player: "
+                f"{game_state.players[player_index].player_id} (index {player_index}) → "
+                f"{game_state.players[next_player_index].player_id} (index {next_player_index})"
+            )
+
+            return replace(
+                game_state,
+                players=new_players,
+                current_player_index=next_player_index
+            )
 
         if action_type == ActionType.PONG:
             # Check if player has 2 matching tiles in hand
