@@ -607,18 +607,51 @@ class PlayerActions:
             new_players = list(game_state.players)
             new_players[player_index] = updated_player
 
-            # ✅ 修复：胡牌后切换到下一个玩家（血战到底：继续游戏）
+            # ✅ 修复：胡牌后让下一个玩家摸牌（血战到底：继续游戏）
             # 根据规则："胡牌后轮到下一个玩家，游戏继续"
             next_player_index = (player_index + 1) % 4
+            next_player = new_players[next_player_index]
+
+            # 检查牌墙是否为空
+            new_wall = list(game_state.wall)
+            if not new_wall:
+                # 牌墙为空，游戏结束
+                from mahjong.services.game_manager import GameManager
+                logger.info(f"[HU AFTER] Wall empty after HU, ending game")
+                temp_state = replace(game_state, players=new_players, current_player_index=next_player_index)
+                return GameManager.end_game(temp_state)
+
+            # 让下一个玩家摸牌
+            logger.info(
+                f"[HU AFTER] Next player {next_player.player_id} drawing tile..."
+            )
+            drawn_tile = new_wall.pop(0)
+            updated_next_player_hand = list(next_player.hand)
+            updated_next_player_hand.append(drawn_tile)
+
+            logger.info(
+                f"[HU AFTER] Next player {next_player.player_id} drew {drawn_tile}, "
+                f"hand: {len(next_player.hand)} → {len(updated_next_player_hand)} tiles"
+            )
+
+            # 更新下一个玩家的状态
+            updated_next_player = replace(
+                next_player,
+                hand=updated_next_player_hand,
+                last_drawn_tile=drawn_tile
+            )
+            new_players[next_player_index] = updated_next_player
+
             logger.info(
                 f"[HU AFTER] Switching to next player: "
                 f"{game_state.players[player_index].player_id} (index {player_index}) → "
-                f"{game_state.players[next_player_index].player_id} (index {next_player_index})"
+                f"{updated_next_player.player_id} (index {next_player_index})"
             )
 
             return replace(
                 game_state,
                 players=new_players,
+                wall=new_wall,
                 current_player_index=next_player_index
             )
 
