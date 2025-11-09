@@ -47,12 +47,12 @@ function getPhaseDisplay(phase: string): string {
  */
 function getPlayerName(playerId: string): string {
   const nameMap: Record<string, string> = {
-    human: '你',
+    human: '',
     ai_1: 'AI 1',
     ai_2: 'AI 2',
     ai_3: 'AI 3',
   };
-  return nameMap[playerId] || playerId;
+  return playerId in nameMap ? nameMap[playerId] : playerId;
 }
 
 export function GameInfo({
