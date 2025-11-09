@@ -12,8 +12,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/common/Modal';
 import { PlayerHand } from './PlayerHand';
-import { DiscardPile } from './DiscardPile';
-import { OpponentInfo } from './OpponentInfo';
+import { PlayerArea } from './PlayerArea';
+import { CenterArea } from './CenterArea';
 import { ActionButtons } from './ActionButtons';
 import { KongButtons } from './KongButtons';
 import { useUIStore, useGameStore } from '@/stores';
@@ -613,108 +613,88 @@ export function GameBoard() {
     );
   }
 
-  // 游戏进行中阶段
+  // 获取AI玩家（按固定位置排列）
+  const aiPlayers = gameStateData.players.filter(p => p.playerId !== 'human');
+
+  // 游戏进行中阶段 - Grid四方位布局
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">游戏进行中</h2>
-              <p className="text-sm text-gray-500 mt-1">游戏ID: {gameId}</p>
-            </div>
-            <Button
-              onClick={() => {
-                if (confirm('确定要重新开始吗？')) {
-                  window.location.reload();
-                }
-              }}
-              variant="secondary"
-            >
-              重新开始
-            </Button>
+    <div className="h-screen bg-gradient-to-br from-green-50 to-green-100 overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="bg-white shadow-md p-3">
+        <div className="flex justify-between items-center max-w-full px-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">血战到底麻将</h2>
+            <p className="text-xs text-gray-500">游戏ID: {gameId}</p>
           </div>
+          <Button
+            onClick={() => {
+              if (confirm('确定要重新开始吗？')) {
+                window.location.reload();
+              }
+            }}
+            variant="secondary"
+          >
+            重新开始
+          </Button>
+        </div>
+      </div>
+
+      {/* Mahjong Table Grid - 3x3 Grid Layout */}
+      <div className="flex-1 grid grid-cols-[220px_1fr_220px] grid-rows-[160px_1fr_280px] gap-3 p-3 overflow-hidden">
+        {/* Top-left: Empty */}
+        <div />
+
+        {/* Top-center: AI_2 */}
+        <div className="flex items-start justify-center">
+          {aiPlayers[1] && (
+            <PlayerArea
+              player={aiPlayers[1]}
+              position="top"
+              isCurrentTurn={gameStateData.currentPlayerIndex === gameStateData.players.findIndex(p => p.playerId === aiPlayers[1].playerId)}
+            />
+          )}
         </div>
 
-        {/* Game State Info */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4">游戏状态</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">游戏阶段</p>
-              <p className="text-lg font-medium">{gamePhase}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">当前回合</p>
-              <p className="text-lg font-medium">
-                玩家 {gameStateData.currentPlayerIndex}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">牌墙剩余</p>
-              <p className="text-lg font-medium">
-                {gameStateData.wallRemainingCount} 张
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">玩家数量</p>
-              <p className="text-lg font-medium">
-                {gameStateData.players.length} 人
-              </p>
-            </div>
-          </div>
+        {/* Top-right: Empty */}
+        <div />
 
-          {/* Player Info */}
-          <div className="mt-6">
-            <h4 className="text-md font-semibold mb-3">玩家信息</h4>
-            <div className="space-y-2">
-              {gameStateData.players.map((player, index) => (
-                <div
-                  key={player.playerId}
-                  className={`p-3 rounded ${
-                    index === gameStateData.currentPlayerIndex
-                      ? 'bg-blue-50 border-2 border-blue-300'
-                      : 'bg-gray-50'
-                  }`}
-                >
-                  <div className="flex justify-between">
-                    <span className="font-medium">
-                      {player.playerId}
-                      {index === gameStateData.currentPlayerIndex &&
-                        ' ⬅️ 当前回合'}
-                    </span>
-                    <span>分数: {player.score}</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    手牌:{' '}
-                    {player.hand ? player.hand.length : player.handCount} 张
-                    {player.missingSuit && ` | 缺门: ${player.missingSuit}`}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Middle-left: AI_1 */}
+        <div className="flex items-center justify-center">
+          {aiPlayers[0] && (
+            <PlayerArea
+              player={aiPlayers[0]}
+              position="left"
+              isCurrentTurn={gameStateData.currentPlayerIndex === gameStateData.players.findIndex(p => p.playerId === aiPlayers[0].playerId)}
+            />
+          )}
         </div>
 
-        {/* Opponent Info - AI Players */}
-        <div className="mb-6">
-          <OpponentInfo
-            opponents={gameStateData.players.slice(1)}
-            currentPlayerIndex={gameStateData.currentPlayerIndex}
-          />
+        {/* Middle-center: Center area (discard pile + game info) */}
+        <CenterArea
+          publicDiscards={gameStateData.publicDiscards || []}
+          wallRemaining={gameStateData.wallRemainingCount}
+          gamePhase={gamePhase}
+          maxDisplay={24}
+        />
+
+        {/* Middle-right: AI_3 */}
+        <div className="flex items-center justify-center">
+          {aiPlayers[2] && (
+            <PlayerArea
+              player={aiPlayers[2]}
+              position="right"
+              isCurrentTurn={gameStateData.currentPlayerIndex === gameStateData.players.findIndex(p => p.playerId === aiPlayers[2].playerId)}
+            />
+          )}
         </div>
 
-        {/* Discard Pile */}
-        {gameStateData.publicDiscards && gameStateData.publicDiscards.length > 0 && (
-          <div className="mb-6">
-            <DiscardPile discardPile={gameStateData.publicDiscards} />
-          </div>
-        )}
+        {/* Bottom-left: Empty */}
+        <div />
 
-        {/* Player Hand */}
-        {humanPlayer.hand && (
-          <div className="mb-6">
+        {/* Bottom-center: Human player */}
+        <div className="flex flex-col gap-2 overflow-auto">
+          {/* Player Hand */}
+          {humanPlayer.hand && (
             <PlayerHand
               hand={humanPlayer.hand}
               melds={humanPlayer.melds}
@@ -726,12 +706,10 @@ export function GameBoard() {
               disabled={isSubmitting}
               isHu={humanPlayer.isHu}
             />
-          </div>
-        )}
+          )}
 
-        {/* Action Buttons - 响应操作（碰/杠/胡/过） */}
-        {availableActions.length > 0 && (
-          <div className="mb-6">
+          {/* Action Buttons - 响应操作（碰/杠/胡/过） */}
+          {availableActions.length > 0 && (
             <ActionButtons
               gameId={gameId}
               playerId="human"
@@ -759,12 +737,10 @@ export function GameBoard() {
                 });
               }}
             />
-          </div>
-        )}
+          )}
 
-        {/* Kong Buttons - 主动杠牌（暗杠/补杠） */}
-        {kongOptions.length > 0 && (
-          <div className="mb-6">
+          {/* Kong Buttons - 主动杠牌（暗杠/补杠） */}
+          {kongOptions.length > 0 && (
             <KongButtons
               gameId={gameId}
               playerId="human"
@@ -784,91 +760,74 @@ export function GameBoard() {
                 });
               }}
             />
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Turn Indicator */}
-        {gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human' ? (
-          <div className="bg-green-50 rounded-lg p-4 border-2 border-green-300 text-center">
-            <p className="text-lg font-semibold text-green-800">
-              轮到你了！请点击手牌出牌
-            </p>
-            {humanPlayer.missingSuit && (
-              <p className="text-sm text-green-600 mt-1">
-                提示：优先打出缺门牌（{humanPlayer.missingSuit}）
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-300 text-center">
-            <p className="text-gray-600">
-              等待 AI 玩家 {gameStateData.players[gameStateData.currentPlayerIndex]?.playerId} 出牌...
-            </p>
-          </div>
-        )}
+        {/* Bottom-right: Empty */}
+        <div />
+      </div>
 
-        {/* T063: 胡牌结果弹窗 */}
-        {showWinModal && winDetails && (
-          <Modal
-            title={
-              winDetails.isBloodBattle
-                ? MODAL_TITLES.BLOOD_BATTLE_CONTINUE
-                : MODAL_TITLES.WIN
-            }
-            content={
-              <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600 mb-2">
-                    {winDetails.isBloodBattle ? '🎉 恭喜胡牌！血战继续' : '🎉 恭喜胡牌！'}
-                  </p>
-                </div>
+      {/* T063: 胡牌结果弹窗 */}
+      {showWinModal && winDetails && (
+        <Modal
+          title={
+            winDetails.isBloodBattle
+              ? MODAL_TITLES.BLOOD_BATTLE_CONTINUE
+              : MODAL_TITLES.WIN
+          }
+          content={
+            <div className="space-y-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600 mb-2">
+                  {winDetails.isBloodBattle ? '🎉 恭喜胡牌！血战继续' : '🎉 恭喜胡牌！'}
+                </p>
+              </div>
 
-                {/* 胜者信息 */}
-                <div className="space-y-2">
-                  {winDetails.winners.map((winner) => (
-                    <div
-                      key={winner.playerId}
-                      className={`p-4 rounded-lg ${
-                        winner.playerId === 'human'
-                          ? 'bg-green-50 border-2 border-green-500'
-                          : 'bg-gray-50 border border-gray-300'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-lg">
-                          {winner.playerId === 'human' ? '你' : winner.playerId}
-                        </span>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600">
-                            {INFO_LABELS.FAN_COUNT}: {winner.fanCount}
-                          </div>
-                          <div className={`text-lg font-bold ${
-                            winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {INFO_LABELS.SCORE_CHANGE}: {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}
-                          </div>
+              {/* 胜者信息 */}
+              <div className="space-y-2">
+                {winDetails.winners.map((winner) => (
+                  <div
+                    key={winner.playerId}
+                    className={`p-4 rounded-lg ${
+                      winner.playerId === 'human'
+                        ? 'bg-green-50 border-2 border-green-500'
+                        : 'bg-gray-50 border border-gray-300'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-lg">
+                        {winner.playerId === 'human' ? '你' : winner.playerId}
+                      </span>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">
+                          {INFO_LABELS.FAN_COUNT}: {winner.fanCount}
+                        </div>
+                        <div className={`text-lg font-bold ${
+                          winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {INFO_LABELS.SCORE_CHANGE}: {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {winDetails.isBloodBattle && (
-                  <div className="text-center text-sm text-gray-600 mt-4">
-                    血战到底模式：游戏继续，摸什么打什么
                   </div>
-                )}
+                ))}
               </div>
-            }
-            confirmText={BUTTON_LABELS.CONFIRM}
-            onConfirm={() => {
-              setShowWinModal(false);
-              setWinDetails(null);
-            }}
-            closable={false}
-          />
-        )}
-      </div>
+
+              {winDetails.isBloodBattle && (
+                <div className="text-center text-sm text-gray-600 mt-4">
+                  血战到底模式：游戏继续，摸什么打什么
+                </div>
+              )}
+            </div>
+          }
+          confirmText={BUTTON_LABELS.CONFIRM}
+          onConfirm={() => {
+            setShowWinModal(false);
+            setWinDetails(null);
+          }}
+          closable={false}
+        />
+      )}
     </div>
   );
 }

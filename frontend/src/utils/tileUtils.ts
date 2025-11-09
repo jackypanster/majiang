@@ -78,3 +78,22 @@ export function getMostCommonSuit(tiles: Tile[]): Suit | null {
 
   return suit;
 }
+
+/**
+ * Get suit display name in Chinese
+ */
+export function getSuitDisplay(suit: string): string {
+  const suitMap: Record<string, string> = {
+    WAN: '万',
+    TIAO: '条',
+    TONG: '筒',
+  };
+  return suitMap[suit] || suit;
+}
+
+/**
+ * Get tile display text (e.g. "万1", "筒5")
+ */
+export function getTileDisplay(tile: Tile): string {
+  return `${getSuitDisplay(tile.suit)}${tile.rank}`;
+}
