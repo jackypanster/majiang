@@ -22,6 +22,30 @@ class WinChecker:
         Returns:
             True if player can hu, False otherwise
         """
+        # 📊 LOG: 胡牌检查开始
+        hand_count = len(player.hand)
+        melds_count = sum(len(m.tiles) for m in player.melds)
+        kong_count = sum(1 for m in player.melds if len(m.tiles) == 4)
+        logger.info(
+            f"[WinChecker] === HU CHECK START === player={player.player_id}, "
+            f"is_hu={player.is_hu}, extra_tile={extra_tile}"
+        )
+        logger.info(
+            f"[WinChecker]   hand_count={hand_count}, hand={player.hand}"
+        )
+        logger.info(
+            f"[WinChecker]   melds_count={melds_count}, melds={player.melds}"
+        )
+        logger.info(
+            f"[WinChecker]   kong_count={kong_count}"
+        )
+        logger.info(
+            f"[WinChecker]   hu_tiles={player.hu_tiles}"
+        )
+        logger.info(
+            f"[WinChecker]   missing_suit={player.missing_suit}"
+        )
+
         # Collect all tiles: hand + melds + extra_tile
         all_tiles = list(player.hand)
         if extra_tile:
@@ -30,6 +54,15 @@ class WinChecker:
         # Flatten melds
         for meld in player.melds:
             all_tiles.extend(meld.tiles)
+
+        # 📊 LOG: 总牌数
+        logger.info(
+            f"[WinChecker]   total_tiles_count={len(all_tiles)} "
+            f"(hand={hand_count} + extra={1 if extra_tile else 0} + melds={melds_count})"
+        )
+        logger.info(
+            f"[WinChecker]   Expected: 10 + kong_count + 1 = {10 + kong_count + 1} tiles for hu"
+        )
 
         if not all_tiles:
             return False

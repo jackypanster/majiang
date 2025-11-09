@@ -139,10 +139,31 @@ class PlayerActions:
             return GameManager.end_game(game_state)
 
         # 下一个玩家摸牌
-        drawn_tile = new_wall.pop(0)
         next_player = new_players[new_current_player_index]
+
+        # 📊 LOG: 摸牌前
+        logger.info(
+            f"[DRAW] === DRAW TILE START === player={next_player.player_id}, "
+            f"is_hu={next_player.is_hu}"
+        )
+        logger.info(
+            f"[DRAW]   before_hand_count={len(next_player.hand)}, "
+            f"hand={next_player.hand}"
+        )
+
+        drawn_tile = new_wall.pop(0)
         updated_next_player_hand = list(next_player.hand)
         updated_next_player_hand.append(drawn_tile)
+
+        # 📊 LOG: 摸牌后
+        logger.info(
+            f"[DRAW]   drawn_tile={drawn_tile}, wall_remaining={len(new_wall)}"
+        )
+        logger.info(
+            f"[DRAW]   after_hand_count={len(updated_next_player_hand)}, "
+            f"hand={updated_next_player_hand}"
+        )
+
         # 记录最后摸的牌（用于已胡玩家"摸什么打什么"）
         updated_next_player = replace(
             next_player,
@@ -379,10 +400,27 @@ class PlayerActions:
                 )
 
         # 4. 打牌到弃牌堆
-        logger.info(f"Game {game_state.game_id}: Player {player_id} discarded {tile}")
+        # 📊 LOG: 打牌前
+        logger.info(
+            f"[DISCARD] === DISCARD TILE START === player={player_id}, "
+            f"is_hu={current_player.is_hu}"
+        )
+        logger.info(
+            f"[DISCARD]   before_hand_count={len(current_player.hand)}, "
+            f"hand={current_player.hand}"
+        )
+        logger.info(
+            f"[DISCARD]   discarding_tile={tile}, last_drawn_tile={current_player.last_drawn_tile}"
+        )
 
         new_current_player_hand = list(current_player.hand)
         new_current_player_hand.remove(tile)
+
+        # 📊 LOG: 打牌后
+        logger.info(
+            f"[DISCARD]   after_hand_count={len(new_current_player_hand)}, "
+            f"hand={new_current_player_hand}"
+        )
 
         # 打牌后清除 last_drawn_tile 标记
         updated_current_player = replace(
@@ -521,10 +559,43 @@ class PlayerActions:
                 # 因为 last_drawn_tile 已经在手牌中，需要移除
                 new_hand.remove(target_tile)
                 new_hu_tiles.append(target_tile)
+                # 📊 LOG: 自摸胡牌后的手牌变化
+                logger.info(
+                    f"[HU AFTER] Self-draw: hand_count changed: "
+                    f"{len(player.hand)} -> {len(new_hand)}, "
+                    f"removed tile={target_tile}"
+                )
             else:
                 # 点炮：将别人打出的牌加入 hu_tiles（手牌保持10张）
                 # target_tile 不在手牌中，直接加入 hu_tiles
                 new_hu_tiles.append(target_tile)
+                # 📊 LOG: 点炮胡牌后的手牌变化
+                logger.info(
+                    f"[HU AFTER] From-discard: hand_count unchanged: {len(new_hand)}, "
+                    f"added tile to hu_tiles={target_tile}"
+                )
+
+            # 📊 LOG: 胡牌后的总状态
+            melds_count = sum(len(m.tiles) for m in player.melds)
+            kong_count = sum(1 for m in player.melds if len(m.tiles) == 4)
+            logger.info(
+                f"[HU AFTER] === HU ACTION COMPLETE === player={player_id}"
+            )
+            logger.info(
+                f"[HU AFTER]   new_hand_count={len(new_hand)}, new_hand={new_hand}"
+            )
+            logger.info(
+                f"[HU AFTER]   melds_count={melds_count}, melds={player.melds}"
+            )
+            logger.info(
+                f"[HU AFTER]   new_hu_tiles={new_hu_tiles}"
+            )
+            logger.info(
+                f"[HU AFTER]   Total tiles in game: hand({len(new_hand)}) + melds({melds_count}) = {len(new_hand) + melds_count}"
+            )
+            logger.info(
+                f"[HU AFTER]   Expected: 10 + kong_count = {10 + kong_count} tiles (excluding hu_tiles)"
+            )
 
             updated_player = replace(
                 player,
@@ -545,12 +616,26 @@ class PlayerActions:
                     f"Player {player_id} cannot PONG {target_tile} - only has {player.hand.count(target_tile)} in hand"
                 )
 
-            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully PONG (碰) {target_tile}")
+            # 📊 LOG: 碰牌前
+            logger.info(
+                f"[PONG] === PONG START === player={player_id}, target_tile={target_tile}"
+            )
+            logger.info(
+                f"[PONG]   before_hand_count={len(player.hand)}, hand={player.hand}"
+            )
 
             # Remove 2 tiles from hand
             new_hand = list(player.hand)
             for _ in range(2):
                 new_hand.remove(target_tile)
+
+            # 📊 LOG: 碰牌后
+            logger.info(
+                f"[PONG]   after_hand_count={len(new_hand)} (removed 2 tiles)"
+            )
+            logger.info(
+                f"[PONG]   must discard 1 tile next (hand will become {len(new_hand)-1})"
+            )
 
             # Create meld (碰) with the 3 tiles
             new_meld = Meld(meld_type=ActionType.PONG, tiles=(target_tile, target_tile, target_tile), is_concealed=False)
@@ -576,10 +661,23 @@ class PlayerActions:
                     f"Player {player_id} cannot KONG_EXPOSED {target_tile} - only has {player.hand.count(target_tile)} in hand"
                 )
 
+            # 📊 LOG: 杠牌前
+            logger.info(
+                f"[KONG] === KONG_EXPOSED START === player={player_id}, target_tile={target_tile}"
+            )
+            logger.info(
+                f"[KONG]   before_hand_count={len(player.hand)}, hand={player.hand}"
+            )
+
             # Remove 3 tiles from hand
             new_hand = list(player.hand)
             for _ in range(3):
                 new_hand.remove(target_tile)
+
+            # 📊 LOG: 移除3张后
+            logger.info(
+                f"[KONG]   after_remove_3: hand_count={len(new_hand)}"
+            )
 
             # Create meld (明杠) with the 4 tiles
             meld_type = ActionType.KONG_EXPOSED if action_type == ActionType.KONG_EXPOSED else ActionType.KONG
