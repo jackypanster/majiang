@@ -9,6 +9,7 @@ from mahjong.models.meld import Meld
 from mahjong.models.player import Player
 from mahjong.models.response import PlayerResponse
 from mahjong.models.tile import Tile
+from mahjong.models.discarded_tile import DiscardedTile
 from mahjong.services.win_checker import WinChecker
 from mahjong.services import get_logger
 
@@ -430,7 +431,13 @@ class PlayerActions:
         )
 
         new_public_discards = list(game_state.public_discards)
-        new_public_discards.append(tile)
+        # 创建 DiscardedTile 对象，记录打牌者和顺序（用于UI动画）
+        discarded_tile = DiscardedTile(
+            tile=tile,
+            player_id=player_id,
+            turn_index=len(new_public_discards)
+        )
+        new_public_discards.append(discarded_tile)
 
         new_players = list(game_state.players)
         new_players[current_player_index] = updated_current_player

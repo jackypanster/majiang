@@ -14,6 +14,7 @@ export type { Meld } from './meld';
 export type { Player } from './player';
 export type { GameState } from './game';
 export type { PlayerResponse } from './action';
+export type { DiscardedTile } from './discarded_tile';
 
 // API types
 export type {
@@ -55,3 +56,7 @@ export {
 export {
   getActionPriority
 } from './action';
+
+export {
+  createDiscardedTile
+} from './discarded_tile';
