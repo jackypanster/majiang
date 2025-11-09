@@ -114,105 +114,92 @@ export function ActionButtons({
     });
   };
 
-  // 如果没有可用动作，不显示按钮
-  if (availableActions.length === 0) {
-    return null;
-  }
-
   // T066: 无超时逻辑（不显示倒计时）
+  // 按钮常驻显示，不可用时禁用（简化逻辑）
   const isDisabled = mutation.isPending;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold mb-3">响应操作</h3>
+    <div className="flex flex-col gap-2">
       <div className="flex gap-3">
-        {/* 碰按钮 */}
-        {availableActions.includes('peng') && (
-          <button
-            onClick={handlePeng}
-            disabled={isDisabled}
-            className={`
-              px-6 py-3 rounded-md font-semibold text-lg
-              border-2 transition-all
-              ${
-                isDisabled
-                  ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
-                  : 'bg-green-500 text-white border-green-600 hover:bg-green-600 cursor-pointer'
-              }
-            `}
-          >
-            {BUTTON_LABELS.PONG}
-          </button>
-        )}
+        {/* 碰按钮 - 常驻显示 */}
+        <button
+          onClick={handlePeng}
+          disabled={isDisabled || !availableActions.includes('peng')}
+          className={`
+            px-6 py-3 rounded-md font-semibold text-lg
+            border-2 transition-all
+            ${
+              isDisabled || !availableActions.includes('peng')
+                ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
+                : 'bg-green-500 text-white border-green-600 hover:bg-green-600 cursor-pointer'
+            }
+          `}
+        >
+          {BUTTON_LABELS.PONG}
+        </button>
 
-        {/* 杠按钮 */}
-        {availableActions.includes('gang') && (
-          <button
-            onClick={handleGang}
-            disabled={isDisabled}
-            className={`
-              px-6 py-3 rounded-md font-semibold text-lg
-              border-2 transition-all
-              ${
-                isDisabled
-                  ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
-                  : 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600 cursor-pointer'
-              }
-            `}
-          >
-            {BUTTON_LABELS.KONG}
-          </button>
-        )}
+        {/* 杠按钮 - 常驻显示 */}
+        <button
+          onClick={handleGang}
+          disabled={isDisabled || !availableActions.includes('gang')}
+          className={`
+            px-6 py-3 rounded-md font-semibold text-lg
+            border-2 transition-all
+            ${
+              isDisabled || !availableActions.includes('gang')
+                ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
+                : 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600 cursor-pointer'
+            }
+          `}
+        >
+          {BUTTON_LABELS.KONG}
+        </button>
 
-        {/* 胡按钮（高亮显示） */}
-        {availableActions.includes('hu') && (
-          <button
-            onClick={handleHu}
-            disabled={isDisabled}
-            className={`
-              px-6 py-3 rounded-md font-semibold text-lg
-              border-2 transition-all
-              ${
-                isDisabled
-                  ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
-                  : 'bg-red-500 text-white border-red-600 hover:bg-red-600 cursor-pointer animate-pulse'
-              }
-            `}
-          >
-            {BUTTON_LABELS.HU}
-          </button>
-        )}
+        {/* 胡按钮 - 常驻显示（可用时高亮） */}
+        <button
+          onClick={handleHu}
+          disabled={isDisabled || !availableActions.includes('hu')}
+          className={`
+            px-6 py-3 rounded-md font-semibold text-lg
+            border-2 transition-all
+            ${
+              isDisabled || !availableActions.includes('hu')
+                ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
+                : 'bg-red-500 text-white border-red-600 hover:bg-red-600 cursor-pointer animate-pulse'
+            }
+          `}
+        >
+          {BUTTON_LABELS.HU}
+        </button>
 
-        {/* 过按钮 */}
-        {availableActions.includes('skip') && (
-          <button
-            onClick={handleSkip}
-            disabled={isDisabled}
-            className={`
-              px-6 py-3 rounded-md font-semibold text-lg
-              border-2 transition-all
-              ${
-                isDisabled
-                  ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
-                  : 'bg-gray-500 text-white border-gray-600 hover:bg-gray-600 cursor-pointer'
-              }
-            `}
-          >
-            {BUTTON_LABELS.PASS}
-          </button>
-        )}
+        {/* 过按钮 - 常驻显示 */}
+        <button
+          onClick={handleSkip}
+          disabled={isDisabled || !availableActions.includes('skip')}
+          className={`
+            px-6 py-3 rounded-md font-semibold text-lg
+            border-2 transition-all
+            ${
+              isDisabled || !availableActions.includes('skip')
+                ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
+                : 'bg-gray-500 text-white border-gray-600 hover:bg-gray-600 cursor-pointer'
+            }
+          `}
+        >
+          {BUTTON_LABELS.PASS}
+        </button>
       </div>
 
       {/* T065: 错误提示 */}
       {mutation.isError && (
-        <div className="mt-3 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+        <div className="mt-1 p-2 bg-red-100 text-red-700 rounded-md text-xs">
           {mutation.error?.message || TOAST_MESSAGES.ACTION_SUCCESS}
         </div>
       )}
 
       {/* 加载状态提示 */}
       {mutation.isPending && (
-        <div className="mt-3 p-3 bg-blue-100 text-blue-700 rounded-md text-sm">
+        <div className="mt-1 p-2 bg-blue-100 text-blue-700 rounded-md text-xs">
           正在提交操作...
         </div>
       )}

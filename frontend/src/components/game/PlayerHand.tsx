@@ -124,33 +124,64 @@ export function PlayerHand({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      {/* 手牌区域 */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">
+    <div className="flex flex-row gap-4 items-start">
+      {/* 明牌区域（碰/杠） - 最左侧 */}
+      {melds.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold text-gray-700">明牌</h4>
+          <div className="flex flex-col gap-2">
+            {melds.map((meld, meldIndex) => (
+              <div
+                key={meldIndex}
+                className="flex gap-1 bg-green-50 p-2 rounded-md border border-green-300"
+              >
+                {meld.tiles.map((tile, tileIndex) => (
+                  <div
+                    key={tileIndex}
+                    className="px-3 py-1 bg-white text-gray-800 font-semibold rounded border border-gray-300"
+                  >
+                    {getTileDisplay(tile)}
+                  </div>
+                ))}
+                <div className="ml-1 text-xs text-gray-600 self-center">
+                  {meld.meldType === 'PONG' && '碰'}
+                  {meld.meldType === 'KONG' && '杠'}
+                  {meld.meldType === 'KONG_EXPOSED' && '明杠'}
+                  {meld.meldType === 'KONG_CONCEALED' && '暗杠'}
+                  {meld.meldType === 'KONG_UPGRADE' && '补杠'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 手牌区域 - 中间 */}
+      <div className="flex flex-col gap-2 flex-1">
+        <h3 className="text-sm font-semibold text-gray-700">
           我的手牌（{hand.length}张）
           {selectable && (
-            <span className="ml-2 text-sm text-blue-600 font-normal">
+            <span className="ml-2 text-xs text-blue-600 font-normal">
               - 请选择3张埋牌
             </span>
           )}
           {!selectable && isHu && (
-            <span className="ml-2 text-sm text-yellow-600 font-normal">
+            <span className="ml-2 text-xs text-yellow-600 font-normal">
               - 已胡牌，摸什么打什么
             </span>
           )}
           {!selectable && !isHu && isPlayerTurn && (
-            <span className="ml-2 text-sm text-green-600 font-normal">
+            <span className="ml-2 text-xs text-green-600 font-normal">
               - 请出牌
             </span>
           )}
           {!selectable && !isHu && !isPlayerTurn && (
-            <span className="ml-2 text-sm text-gray-500 font-normal">
+            <span className="ml-2 text-xs text-gray-500 font-normal">
               - 等待AI
             </span>
           )}
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto">
           {sortedIndexedHand.length === 0 ? (
             <p className="text-gray-500">暂无手牌</p>
           ) : (
@@ -188,44 +219,13 @@ export function PlayerHand({
         </div>
       </div>
 
-      {/* 明牌区域（碰/杠） */}
-      {melds.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-md font-semibold mb-2">明牌</h4>
-          <div className="flex flex-wrap gap-4">
-            {melds.map((meld, meldIndex) => (
-              <div
-                key={meldIndex}
-                className="flex gap-1 bg-green-50 p-2 rounded-md border border-green-300"
-              >
-                {meld.tiles.map((tile, tileIndex) => (
-                  <div
-                    key={tileIndex}
-                    className="px-3 py-1 bg-white text-gray-800 font-semibold rounded border border-gray-300"
-                  >
-                    {getTileDisplay(tile)}
-                  </div>
-                ))}
-                <div className="ml-1 text-xs text-gray-600 self-center">
-                  {meld.meldType === 'PONG' && '碰'}
-                  {meld.meldType === 'KONG' && '杠'}
-                  {meld.meldType === 'KONG_EXPOSED' && '明杠'}
-                  {meld.meldType === 'KONG_CONCEALED' && '暗杠'}
-                  {meld.meldType === 'KONG_UPGRADE' && '补杠'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 胡牌区域（已经胡过的牌，血战到底模式） */}
+      {/* 胡牌区域（已经胡过的牌，血战到底模式） - 最右侧 */}
       {huTiles.length > 0 && (
-        <div>
-          <h4 className="text-md font-semibold mb-2">
-            已胡的牌
-            <span className="ml-2 text-sm text-yellow-600 font-normal">
-              - 血战到底，可多次胡牌
+        <div className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold text-gray-700">
+            已胡牌
+            <span className="ml-2 text-xs text-yellow-600 font-normal">
+              (血战到底)
             </span>
           </h4>
           <div className="flex flex-wrap gap-2">

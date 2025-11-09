@@ -29,7 +29,6 @@ body {
   margin: 0;
   min-width: 1280px;
   min-height: 720px;
-  @apply bg-gray-100;
 }
 
 /* Remove default button styles to allow Tailwind styling */
