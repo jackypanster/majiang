@@ -141,7 +141,7 @@ export function PlayerHand({
               </span>
             )}
           </h4>
-          <div className="flex flex-col gap-1 bg-orange-50 p-2 rounded-md border border-orange-300">
+          <div className="flex flex-row gap-1 bg-orange-50 p-2 rounded-md border border-orange-300">
             {buriedCards.map((tile, index) => (
               <div
                 key={index}
@@ -257,7 +257,7 @@ export function PlayerHand({
               (血战到底)
             </span>
           </h4>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-row gap-2">
             {huTiles.map((tile, index) => (
               <div
                 key={index}
