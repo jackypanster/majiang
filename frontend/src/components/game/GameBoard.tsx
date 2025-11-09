@@ -699,12 +699,13 @@ export function GameBoard() {
         <div className="flex flex-col gap-3 items-center justify-end pb-3" style={{ gridArea: 'human' }}>
           {/* 主区域：手牌 + 响应按钮 - 水平排列 */}
           <div className="flex flex-row gap-4 items-start bg-white rounded-lg shadow-md p-4 w-full max-w-7xl">
-            {/* 左：明牌 + 手牌 + 已胡牌（PlayerHand组件） */}
+            {/* 左：埋牌 + 明牌 + 手牌 + 已胡牌（PlayerHand组件） */}
             {humanPlayer.hand && (
               <PlayerHand
                 hand={humanPlayer.hand}
                 melds={humanPlayer.melds}
                 huTiles={humanPlayer.huTiles}
+                buriedCards={humanPlayer.buriedCards}
                 selectable={false}
                 onDiscard={handleDiscard}
                 isPlayerTurn={gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human'}

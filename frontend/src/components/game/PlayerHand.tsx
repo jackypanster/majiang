@@ -24,6 +24,10 @@ interface PlayerHandProps {
    */
   huTiles?: Tile[];
   /**
+   * 玩家埋的3张牌（游戏开始时埋牌）
+   */
+  buriedCards?: Tile[];
+  /**
    * 选中的牌（埋牌阶段使用）
    */
   selectedTiles?: Tile[];
@@ -72,6 +76,7 @@ export function PlayerHand({
   hand,
   melds = [],
   huTiles = [],
+  buriedCards = [],
   selectedTiles = [],
   selectable = false,
   onTileClick,
@@ -125,7 +130,31 @@ export function PlayerHand({
 
   return (
     <div className="flex flex-row gap-4 items-start">
-      {/* 明牌区域（碰/杠） - 最左侧 */}
+      {/* 埋牌区域 - 最左侧 */}
+      {buriedCards.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold text-gray-700">
+            埋牌
+            {missingSuit && (
+              <span className="ml-2 text-xs text-red-600 font-normal">
+                (缺{missingSuit === 'WAN' ? '万' : missingSuit === 'TIAO' ? '条' : '筒'})
+              </span>
+            )}
+          </h4>
+          <div className="flex flex-col gap-1 bg-orange-50 p-2 rounded-md border border-orange-300">
+            {buriedCards.map((tile, index) => (
+              <div
+                key={index}
+                className="px-3 py-1 bg-white text-gray-800 font-semibold rounded border border-orange-400"
+              >
+                {getTileDisplay(tile)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 明牌区域（碰/杠） */}
       {melds.length > 0 && (
         <div className="flex flex-col gap-2">
           <h4 className="text-sm font-semibold text-gray-700">明牌</h4>
