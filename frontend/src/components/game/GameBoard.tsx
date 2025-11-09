@@ -640,7 +640,7 @@ export function GameBoard() {
       </div>
 
       {/* Mahjong Table Grid - 3x3 Grid Layout */}
-      <div className="flex-1 grid grid-cols-[240px_1fr_240px] grid-rows-[180px_1fr_320px] gap-3 p-3 overflow-hidden">
+      <div className="flex-1 grid grid-cols-[320px_1fr_320px] grid-rows-[auto_1fr_auto] gap-2 p-2 overflow-hidden">
         {/* Top-left: Empty */}
         <div />
 
@@ -692,7 +692,7 @@ export function GameBoard() {
         <div />
 
         {/* Bottom-center: Human player */}
-        <div className="flex flex-col gap-2 items-center justify-end overflow-auto">
+        <div className="flex flex-col gap-2 items-center justify-end">
           {/* Player Hand */}
           {humanPlayer.hand && (
             <PlayerHand
