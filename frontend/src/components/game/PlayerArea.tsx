@@ -193,17 +193,19 @@ export function PlayerArea({
         <div className="text-gray-600 text-xs">
           {handCount}张
         </div>
-        {/* 分数显示（带动画） */}
-        <div
-          className={`
-            text-xs font-bold px-2 py-0.5 rounded transition-colors duration-500
-            ${scoreAnimation === 'increase' ? 'bg-green-200 text-green-800' : ''}
-            ${scoreAnimation === 'decrease' ? 'bg-red-200 text-red-800' : ''}
-            ${!scoreAnimation ? 'bg-gray-100 text-gray-700' : ''}
-          `}
-        >
-          {player.score}分
-        </div>
+        {/* 分数显示（带动画，仅人类玩家区域显示） */}
+        {position === 'bottom' && (
+          <div
+            className={`
+              text-xs font-bold px-2 py-0.5 rounded transition-colors duration-500
+              ${scoreAnimation === 'increase' ? 'bg-green-200 text-green-800' : ''}
+              ${scoreAnimation === 'decrease' ? 'bg-red-200 text-red-800' : ''}
+              ${!scoreAnimation ? 'bg-gray-100 text-gray-700' : ''}
+            `}
+          >
+            {player.score}分
+          </div>
+        )}
       </div>
 
       {/* 手牌区域 */}
