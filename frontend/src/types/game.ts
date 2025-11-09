@@ -6,8 +6,10 @@
 
 import { createTile } from './tile';
 import { createPlayer } from './player';
+import { createDiscardedTile } from './discarded_tile';
 import type { Tile } from './tile';
 import type { Player } from './player';
+import type { DiscardedTile } from './discarded_tile';
 
 /**
  * Game phase enum
@@ -35,11 +37,11 @@ export enum GamePhase {
 export interface GameState {
   gameId: string;
   gamePhase: GamePhase;
-  currentPlayerIndex: number;  // Current turn player index (0-3)
-  players: Player[];           // 4 players (index 0 is usually human player)
-  publicDiscards: Tile[];      // Discard pile (visible to all)
-  wallRemainingCount: number;  // Remaining wall count
-  baseScore: number;           // Base score (for kong score calculation)
+  currentPlayerIndex: number;      // Current turn player index (0-3)
+  players: Player[];               // 4 players (index 0 is usually human player)
+  publicDiscards: DiscardedTile[]; // Discard pile with player info (visible to all)
+  wallRemainingCount: number;      // Remaining wall count
+  baseScore: number;               // Base score (for kong score calculation)
 }
 
 /**
@@ -51,7 +53,7 @@ export function createGameState(data: any): GameState {
     gamePhase: data.game_phase as GamePhase,
     currentPlayerIndex: data.current_player_index,
     players: (data.players || []).map(createPlayer),
-    publicDiscards: (data.public_discards || []).map(createTile),
+    publicDiscards: (data.public_discards || []).map(createDiscardedTile),
     wallRemainingCount: data.wall_remaining_count,
     baseScore: data.base_score
   };
