@@ -51,9 +51,9 @@ export function CenterArea({
     : [...publicDiscards].reverse();
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 p-4 rounded-lg border-2 border-green-300 shadow-inner">
-      {/* 游戏状态信息 */}
-      <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center justify-center gap-3 p-4 rounded-lg border-2 border-green-300 shadow-inner h-full">
+      {/* 游戏状态信息 - 紧凑显示 */}
+      <div className="flex items-center gap-4">
         <div className="text-sm font-semibold text-gray-700">
           {getPhaseDisplay(gamePhase)}
         </div>
@@ -62,12 +62,12 @@ export function CenterArea({
         </div>
       </div>
 
-      {/* 弃牌堆 */}
-      <div className="flex flex-col items-center gap-2 w-full">
+      {/* 弃牌堆 - 占据大部分空间 */}
+      <div className="flex flex-col items-center gap-2 w-full flex-1 min-h-0">
         <div className="text-xs font-semibold text-gray-600">弃牌堆</div>
-        <div className="grid grid-cols-6 gap-1.5 max-h-[300px] overflow-y-auto p-2 bg-white/50 rounded">
+        <div className="grid grid-cols-10 gap-2 overflow-y-auto p-3 bg-white/50 rounded w-full h-full content-start">
           {displayedDiscards.length === 0 ? (
-            <div className="col-span-6 text-center text-xs text-gray-400 py-4">
+            <div className="col-span-10 text-center text-xs text-gray-400 py-4">
               暂无弃牌
             </div>
           ) : (
@@ -80,8 +80,8 @@ export function CenterArea({
                 <div
                   key={`${tile.suit}-${tile.rank}-${actualIndex}`}
                   className={`
-                    w-12 h-14 flex items-center justify-center
-                    bg-white text-sm font-bold rounded border-2
+                    w-14 h-16 flex items-center justify-center
+                    bg-white text-base font-bold rounded border-2
                     transition-all duration-300
                     ${isLatest ? 'border-yellow-400 shadow-md scale-105' : 'border-gray-300'}
                   `}
