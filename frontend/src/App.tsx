@@ -33,7 +33,7 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen">
           {/* Game Board */}
           <React.Suspense
             fallback={

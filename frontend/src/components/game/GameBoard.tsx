@@ -618,7 +618,7 @@ export function GameBoard() {
 
   // 游戏进行中阶段 - Grid四方位布局
   return (
-    <div className="h-screen bg-gradient-to-br from-green-50 to-green-100 overflow-hidden flex flex-col">
+    <div className="h-screen bg-gray-100 overflow-hidden flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-md p-3">
         <div className="flex justify-between items-center max-w-full px-4">
@@ -639,13 +639,21 @@ export function GameBoard() {
         </div>
       </div>
 
-      {/* Mahjong Table Grid - 3x3 Grid Layout */}
-      <div className="flex-1 grid grid-cols-[320px_1fr_320px] grid-rows-[auto_1fr_auto] gap-2 p-2 overflow-hidden">
-        {/* Top-left: Empty */}
-        <div />
-
+      {/* Mahjong Table Grid - 使用 grid-template-areas 精确布局 */}
+      <div
+        className="flex-1 grid gap-3 p-0 overflow-hidden bg-gradient-to-br from-green-50 to-green-100"
+        style={{
+          gridTemplateAreas: `
+            ".    ai2   .   "
+            "ai1  center ai3"
+            ".    human .   "
+          `,
+          gridTemplateColumns: 'min-content 1fr min-content',
+          gridTemplateRows: 'auto 1fr auto'
+        }}
+      >
         {/* Top-center: AI_2 */}
-        <div className="flex items-start justify-center">
+        <div className="flex items-start justify-center pt-3" style={{ gridArea: 'ai2' }}>
           {aiPlayers[1] && (
             <PlayerArea
               player={aiPlayers[1]}
@@ -655,11 +663,8 @@ export function GameBoard() {
           )}
         </div>
 
-        {/* Top-right: Empty */}
-        <div />
-
         {/* Middle-left: AI_1 */}
-        <div className="flex items-center justify-start">
+        <div className="flex items-center justify-start" style={{ gridArea: 'ai1' }}>
           {aiPlayers[0] && (
             <PlayerArea
               player={aiPlayers[0]}
@@ -670,15 +675,17 @@ export function GameBoard() {
         </div>
 
         {/* Middle-center: Center area (discard pile + game info) */}
-        <CenterArea
-          publicDiscards={gameStateData.publicDiscards || []}
-          wallRemaining={gameStateData.wallRemainingCount}
-          gamePhase={gamePhase}
-          maxDisplay={24}
-        />
+        <div style={{ gridArea: 'center' }}>
+          <CenterArea
+            publicDiscards={gameStateData.publicDiscards || []}
+            wallRemaining={gameStateData.wallRemainingCount}
+            gamePhase={gamePhase}
+            maxDisplay={24}
+          />
+        </div>
 
         {/* Middle-right: AI_3 */}
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end" style={{ gridArea: 'ai3' }}>
           {aiPlayers[2] && (
             <PlayerArea
               player={aiPlayers[2]}
@@ -688,28 +695,26 @@ export function GameBoard() {
           )}
         </div>
 
-        {/* Bottom-left: Empty */}
-        <div />
-
         {/* Bottom-center: Human player */}
-        <div className="flex flex-col gap-2 items-center justify-end">
-          {/* Player Hand */}
-          {humanPlayer.hand && (
-            <PlayerHand
-              hand={humanPlayer.hand}
-              melds={humanPlayer.melds}
-              huTiles={humanPlayer.huTiles}
-              selectable={false}
-              onDiscard={handleDiscard}
-              isPlayerTurn={gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human'}
-              missingSuit={humanPlayer.missingSuit}
-              disabled={isSubmitting}
-              isHu={humanPlayer.isHu}
-            />
-          )}
+        <div className="flex flex-col gap-3 items-center justify-end pb-3" style={{ gridArea: 'human' }}>
+          {/* 主区域：手牌 + 响应按钮 - 水平排列 */}
+          <div className="flex flex-row gap-4 items-start bg-white rounded-lg shadow-md p-4 w-full max-w-7xl">
+            {/* 左：明牌 + 手牌 + 已胡牌（PlayerHand组件） */}
+            {humanPlayer.hand && (
+              <PlayerHand
+                hand={humanPlayer.hand}
+                melds={humanPlayer.melds}
+                huTiles={humanPlayer.huTiles}
+                selectable={false}
+                onDiscard={handleDiscard}
+                isPlayerTurn={gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human'}
+                missingSuit={humanPlayer.missingSuit}
+                disabled={isSubmitting}
+                isHu={humanPlayer.isHu}
+              />
+            )}
 
-          {/* Action Buttons - 响应操作（碰/杠/胡/过） */}
-          {availableActions.length > 0 && (
+            {/* 右：响应按钮（碰/杠/胡/过） - 常驻显示 */}
             <ActionButtons
               gameId={gameId}
               playerId="human"
@@ -737,9 +742,9 @@ export function GameBoard() {
                 });
               }}
             />
-          )}
+          </div>
 
-          {/* Kong Buttons - 主动杠牌（暗杠/补杠） */}
+          {/* Kong Buttons - 主动杠牌（暗杠/补杠） - 单独一行 */}
           {kongOptions.length > 0 && (
             <KongButtons
               gameId={gameId}
@@ -762,9 +767,6 @@ export function GameBoard() {
             />
           )}
         </div>
-
-        {/* Bottom-right: Empty */}
-        <div />
       </div>
 
       {/* T063: 胡牌结果弹窗 */}

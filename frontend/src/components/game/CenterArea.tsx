@@ -51,7 +51,7 @@ export function CenterArea({
     : [...publicDiscards].reverse();
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border-2 border-green-300 shadow-inner">
+    <div className="flex flex-col items-center justify-center gap-4 p-4 rounded-lg border-2 border-green-300 shadow-inner">
       {/* 游戏状态信息 */}
       <div className="flex flex-col items-center gap-2">
         <div className="text-sm font-semibold text-gray-700">
