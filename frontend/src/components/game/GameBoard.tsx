@@ -661,9 +661,9 @@ export function GameBoard() {
         style={{
           height: '100vh',
           gridTemplateAreas: `
-            ".    ai2   .   "
-            "ai1  center ai3"
-            ".    human .   "
+            ".    ai2     .   "
+            "ai1  center  ai3"
+            "ai1  human   ai3"
           `,
           gridTemplateColumns: 'min-content 1fr min-content',
           gridTemplateRows: '80px minmax(200px, 1fr) 160px'
