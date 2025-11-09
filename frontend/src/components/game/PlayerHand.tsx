@@ -104,6 +104,11 @@ export function PlayerHand({
     return a.tile.rank - b.tile.rank;
   });
 
+  // 找到第一个匹配 lastDrawnTile 的牌的索引（避免重复标记）
+  const firstMatchingIndex = lastDrawnTile
+    ? hand.findIndex(t => t.suit === lastDrawnTile.suit && t.rank === lastDrawnTile.rank)
+    : -1;
+
   // 兼容旧版：使用 getTileId() 判断选中（会有重复牌的问题）
   const selectedTileIds = new Set(
     selectedTiles.map((tile) => getTileId(tile))
@@ -227,38 +232,44 @@ export function PlayerHand({
                 : selectedTileIds.has(tileId);
               const key = `${tileId}-${originalIndex}`;
 
-              // 判断是否是最后摸的牌（用于"摸什么打什么"模式）
-              const isLastDrawn = lastDrawnTile &&
-                tile.suit === lastDrawnTile.suit &&
-                tile.rank === lastDrawnTile.rank;
+              // 判断是否是最后摸的牌（只标记第一个匹配的，避免重复标记）
+              const isLastDrawn = originalIndex === firstMatchingIndex;
 
               // 已胡牌模式下：只能打出最后摸的牌，其他牌锁定显示为灰色
               const isLockedTile = isHu && !isLastDrawn;
               const canClick = !disabled && !isLockedTile && (selectable || isPlayerTurn);
 
               return (
-                <button
-                  key={key}
-                  onClick={() => handleTileClick(tile, originalIndex)}
-                  disabled={!canClick}
-                  className={`
-                    px-4 py-2 rounded-md font-semibold text-lg
-                    border-2 transition-all
-                    ${
-                      isSelected
-                        ? 'bg-blue-500 text-white border-blue-600 transform -translate-y-2'
-                        : isLockedTile
-                          ? 'bg-gray-300 text-gray-500 border-gray-400 opacity-50'
-                          : isLastDrawn && isHu
-                            ? 'bg-green-100 text-green-800 border-green-500 ring-2 ring-green-400'
-                            : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
-                    }
-                    ${canClick ? 'cursor-pointer' : 'cursor-not-allowed'}
-                  `}
-                  title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn && isHu ? `${tileId} (可出牌)` : tileId}
-                >
-                  {getTileDisplay(tile)}
-                </button>
+                <div key={key} className="relative flex flex-col items-center">
+                  {/* 最后摸牌标识 - 显示向下箭头 */}
+                  {isLastDrawn && (
+                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-bold text-green-600">
+                      <span className="text-lg leading-none">▼</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleTileClick(tile, originalIndex)}
+                    disabled={!canClick}
+                    className={`
+                      px-4 py-2 rounded-md font-semibold text-lg
+                      border-2 transition-all
+                      ${
+                        isSelected
+                          ? 'bg-blue-500 text-white border-blue-600 transform -translate-y-2'
+                          : isLockedTile
+                            ? 'bg-gray-300 text-gray-500 border-gray-400 opacity-50'
+                            : isLastDrawn
+                              ? 'bg-green-100 text-green-800 border-green-500 ring-2 ring-green-400'
+                              : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                      }
+                      ${canClick ? 'cursor-pointer' : 'cursor-not-allowed'}
+                    `}
+                    title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌)` : tileId}
+                  >
+                    {getTileDisplay(tile)}
+                  </button>
+                </div>
               );
             })
           )}

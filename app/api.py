@@ -65,15 +65,15 @@ def _human_can_respond(game_state: GameState, human_player_id: str) -> bool:
         logger.info(f"[_human_can_respond] human_player.hand (count={len(human_player.hand)}): {human_player.hand}")
 
         # Count matching tiles manually for debugging
-        matching_count = sum(1 for t in human_player.hand if t.suit == last_tile.suit and t.rank == last_tile.rank)
+        matching_count = sum(1 for t in human_player.hand if t.suit == last_tile.tile.suit and t.rank == last_tile.tile.rank)
         logger.info(f"[_human_can_respond] matching tiles (manual count): {matching_count}")
 
-        count_result = human_player.hand.count(last_tile)
-        logger.info(f"[_human_can_respond] hand.count(last_tile): {count_result}")
+        count_result = human_player.hand.count(last_tile.tile)
+        logger.info(f"[_human_can_respond] hand.count(last_tile.tile): {count_result}")
 
         # Check if human can hu
         try:
-            can_hu = WinChecker.is_hu(human_player, last_tile)
+            can_hu = WinChecker.is_hu(human_player, last_tile.tile)
             logger.info(f"[_human_can_respond] WinChecker.is_hu() = {can_hu}")
             if can_hu:
                 logger.info("[_human_can_respond] → Can HU, returning True")
@@ -272,8 +272,8 @@ async def submit_action(game_id: str, request: PlayerActionRequest):
             if not game_state.public_discards:
                 raise HTTPException(status_code=400, detail="No tile to skip")
 
-            # Get the last discarded tile
-            last_tile = game_state.public_discards[-1]
+            # Get the last discarded tile (extract .tile from DiscardedTile)
+            last_tile = game_state.public_discards[-1].tile
 
             # Create human's PASS response
             human_response = PlayerResponse(
