@@ -174,11 +174,11 @@
 
 ### 实现任务
 
-- [ ] T067 [US4] 实现 GameInfo 组件 frontend/src/components/game/GameInfo.tsx (显示当前回合玩家、牌墙剩余数量、各玩家得分, 实时更新)
+- [X] T067 [US4] 实现 GameInfo 组件 frontend/src/components/game/GameInfo.tsx (显示当前回合玩家、牌墙剩余数量、各玩家得分, 实时更新)
 - [ ] T068 [US4] 实现 AIPlayer 组件 frontend/src/components/game/AIPlayer.tsx (显示 AI 手牌数量、明牌、埋牌、缺门花色、得分, 手牌显示为牌背)
-- [ ] T069 [P] [US4] 实现当前回合高亮逻辑 GameInfo.tsx (高亮显示当前回合玩家名称, 添加视觉提示如边框或图标)
-- [ ] T070 [P] [US4] 实现牌墙剩余数量显示 GameInfo.tsx (显示 wallRemainingCount, 格式化为 "剩余: 42张")
-- [ ] T071 [P] [US4] 实现得分实时更新 GameInfo.tsx (订阅 gameState.players[].score, 分数变化时带动画)
+- [X] T069 [P] [US4] 实现当前回合高亮逻辑 GameInfo.tsx (高亮显示当前回合玩家名称, 添加视觉提示如边框或图标)
+- [X] T070 [P] [US4] 实现牌墙剩余数量显示 GameInfo.tsx (显示 wallRemainingCount, 格式化为 "剩余: 42张")
+- [X] T071 [P] [US4] 实现得分实时更新 GameInfo.tsx (订阅 gameState.players[].score, 分数变化时带动画)
 - [ ] T072 [US4] 实现 AI 明牌显示 AIPlayer.tsx (渲染 player.melds, 显示碰/杠组合, 暂用文字显示牌面)
 - [ ] T073 [US4] 实现 AI 埋牌显示 AIPlayer.tsx (渲染 player.buriedCards, 埋牌后可见, 暂用文字显示)
 - [ ] T074 [US4] 实现缺门花色标识 AIPlayer.tsx (显示 player.missingSuit, 如 "缺: 筒", 带花色图标)
