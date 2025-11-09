@@ -169,7 +169,7 @@ export function GameBoard() {
     } else {
       // 点炮：使用弃牌堆最后一张牌
       targetTile = gameStateData.publicDiscards?.length > 0
-        ? gameStateData.publicDiscards[gameStateData.publicDiscards.length - 1]
+        ? gameStateData.publicDiscards[gameStateData.publicDiscards.length - 1].tile
         : null;
     }
 
@@ -618,7 +618,32 @@ export function GameBoard() {
 
   // 游戏进行中阶段 - Grid四方位布局
   return (
-    <div className="h-screen bg-gray-100 overflow-hidden flex flex-col">
+    <div className="h-screen bg-gray-100 overflow-hidden flex flex-col relative">
+      {/* Kong Buttons - 主动杠牌（暗杠/补杠） - 固定在左上角 */}
+      {kongOptions.length > 0 && (
+        <div className="absolute top-20 left-4 z-50">
+          <KongButtons
+            gameId={gameId}
+            playerId="human"
+            kongOptions={kongOptions}
+            onSuccess={() => {
+              showToast({
+                type: 'success',
+                message: '杠牌成功',
+                duration: 2000,
+              });
+            }}
+            onError={(error) => {
+              showToast({
+                type: 'error',
+                message: error.message || '杠牌失败',
+                duration: 3000,
+              });
+            }}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white shadow-md p-3">
         <div className="flex justify-between items-center max-w-full px-4">
@@ -725,7 +750,7 @@ export function GameBoard() {
                 gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human'
                   ? humanPlayer?.lastDrawnTile || null
                   : (gameStateData.publicDiscards?.length > 0
-                      ? gameStateData.publicDiscards[gameStateData.publicDiscards.length - 1]
+                      ? gameStateData.publicDiscards[gameStateData.publicDiscards.length - 1].tile
                       : null)
               }
               availableActions={availableActions}
@@ -745,29 +770,6 @@ export function GameBoard() {
               }}
             />
           </div>
-
-          {/* Kong Buttons - 主动杠牌（暗杠/补杠） - 单独一行 */}
-          {kongOptions.length > 0 && (
-            <KongButtons
-              gameId={gameId}
-              playerId="human"
-              kongOptions={kongOptions}
-              onSuccess={() => {
-                showToast({
-                  type: 'success',
-                  message: '杠牌成功',
-                  duration: 2000,
-                });
-              }}
-              onError={(error) => {
-                showToast({
-                  type: 'error',
-                  message: error.message || '杠牌失败',
-                  duration: 3000,
-                });
-              }}
-            />
-          )}
         </div>
       </div>
 

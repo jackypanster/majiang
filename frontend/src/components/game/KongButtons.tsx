@@ -76,8 +76,8 @@ export function KongButtons({
   const isDisabled = mutation.isPending;
 
   return (
-    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg shadow-md p-6 border-2 border-yellow-300">
-      <h3 className="text-lg font-semibold mb-3 text-yellow-800">
+    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg shadow-lg p-4 border-2 border-yellow-300 max-w-xs">
+      <h3 className="text-base font-semibold mb-2 text-yellow-800">
         🀄 可用杠牌操作
       </h3>
       <div className="flex flex-col gap-2">
@@ -87,7 +87,7 @@ export function KongButtons({
             onClick={() => handleKong(option)}
             disabled={isDisabled}
             className={`
-              px-6 py-3 rounded-md font-semibold text-base
+              px-4 py-2 rounded-md font-semibold text-sm
               border-2 transition-all flex items-center justify-between
               ${
                 isDisabled
@@ -99,7 +99,7 @@ export function KongButtons({
             `}
           >
             <span>{option.display}</span>
-            <span className="text-sm opacity-90">
+            <span className="text-xs opacity-90">
               {option.type === 'angang' ? '暗杠' : '补杠'}
             </span>
           </button>
@@ -108,27 +108,17 @@ export function KongButtons({
 
       {/* 错误提示 */}
       {mutation.isError && (
-        <div className="mt-3 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+        <div className="mt-2 p-2 bg-red-100 text-red-700 rounded-md text-xs">
           {mutation.error?.message || '杠牌操作失败'}
         </div>
       )}
 
       {/* 加载状态提示 */}
       {mutation.isPending && (
-        <div className="mt-3 p-3 bg-blue-100 text-blue-700 rounded-md text-sm">
+        <div className="mt-2 p-2 bg-blue-100 text-blue-700 rounded-md text-xs">
           正在提交杠牌操作...
         </div>
       )}
-
-      {/* 说明文字 */}
-      <div className="mt-3 text-xs text-gray-600 bg-white bg-opacity-60 p-2 rounded">
-        <p>
-          <strong>暗杠：</strong>手中有4张相同的牌，其他三家各付1倍底分
-        </p>
-        <p className="mt-1">
-          <strong>补杠：</strong>已碰的牌摸到第4张，其他三家各付1倍底分
-        </p>
-      </div>
     </div>
   );
 }
