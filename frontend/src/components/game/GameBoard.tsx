@@ -717,7 +717,7 @@ export function GameBoard() {
         {/* Bottom-center: Human player */}
         <div style={{ gridArea: 'human' }}>
           {/* 主区域：手牌 + 响应按钮 - 水平排列 */}
-          <div className="flex flex-row gap-6 items-start bg-white p-6 rounded-lg">
+          <div className="flex flex-row gap-6 items-end justify-between bg-white p-6 rounded-lg">
             {/* 左：埋牌 + 明牌 + 手牌 + 已胡牌（PlayerHand组件） */}
             {humanPlayer.hand && (
               <PlayerHand
