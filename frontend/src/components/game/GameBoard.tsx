@@ -682,7 +682,7 @@ export function GameBoard() {
         </div>
 
         {/* Middle-left: AI_1 */}
-        <div className="flex items-center justify-start" style={{ gridArea: 'ai1' }}>
+        <div className="flex items-end justify-start" style={{ gridArea: 'ai1' }}>
           {aiPlayers[0] && (
             <PlayerArea
               player={aiPlayers[0]}
@@ -703,7 +703,7 @@ export function GameBoard() {
         </div>
 
         {/* Middle-right: AI_3 */}
-        <div className="flex items-center justify-end" style={{ gridArea: 'ai3' }}>
+        <div className="flex items-end justify-end" style={{ gridArea: 'ai3' }}>
           {aiPlayers[2] && (
             <PlayerArea
               player={aiPlayers[2]}
