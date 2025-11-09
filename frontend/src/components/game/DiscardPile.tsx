@@ -86,7 +86,7 @@ export function DiscardPile({ discardPile, maxDisplay }: DiscardPileProps) {
         弃牌堆 <span className="text-sm text-gray-500">({discardPile.length}张)</span>
       </h3>
 
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-0.5">
         {displayedTiles.map((tile, index) => {
           // 最新的牌（reverse后index=0）
           const isLatest = index === 0;
