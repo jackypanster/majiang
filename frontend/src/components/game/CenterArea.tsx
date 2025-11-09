@@ -40,16 +40,42 @@ function getPhaseDisplay(phase: string): string {
 }
 
 /**
- * 获取玩家显示名称（用于倒三角标识）
+ * 获取玩家简短标识（用于弃牌标签）
  */
-function getPlayerDisplay(playerId: string): string {
-  const playerMap: Record<string, string> = {
-    human: '你',
-    ai_1: 'AI1',
-    ai_2: 'AI2',
-    ai_3: 'AI3',
+function getPlayerLabel(playerId: string): string {
+  const labelMap: Record<string, string> = {
+    human: '人',
+    ai_1: '上',
+    ai_2: '对',
+    ai_3: '下',
   };
-  return playerMap[playerId] || playerId;
+  return labelMap[playerId] || playerId;
+}
+
+/**
+ * 获取玩家标签背景颜色
+ */
+function getPlayerLabelColor(playerId: string): string {
+  const colorMap: Record<string, string> = {
+    human: 'bg-blue-500 text-white',
+    ai_1: 'bg-green-500 text-white',
+    ai_2: 'bg-red-500 text-white',
+    ai_3: 'bg-amber-500 text-white',
+  };
+  return colorMap[playerId] || 'bg-gray-500 text-white';
+}
+
+/**
+ * 获取玩家牌边框颜色
+ */
+function getPlayerBorderColor(playerId: string): string {
+  const borderMap: Record<string, string> = {
+    human: 'border-blue-400',
+    ai_1: 'border-green-400',
+    ai_2: 'border-red-400',
+    ai_3: 'border-amber-400',
+  };
+  return borderMap[playerId] || 'border-gray-400';
 }
 
 export function CenterArea({
@@ -94,11 +120,21 @@ export function CenterArea({
                   key={`${discardedTile.tile.suit}-${discardedTile.tile.rank}-${actualIndex}`}
                   className="relative flex flex-col items-center"
                 >
-                  {/* 玩家指示器（倒三角）- 只在最新弃牌上显示 */}
+                  {/* 玩家标识标签 - 每张牌都显示 */}
+                  <div
+                    className={`
+                      absolute -top-4 left-1/2 -translate-x-1/2
+                      text-xs font-bold px-1.5 py-0.5 rounded-sm
+                      ${getPlayerLabelColor(discardedTile.playerId)}
+                    `}
+                  >
+                    {getPlayerLabel(discardedTile.playerId)}
+                  </div>
+
+                  {/* 最新弃牌的倒三角指示器 */}
                   {isLatest && (
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-bold text-red-600 flex flex-col items-center">
-                      <span>{getPlayerDisplay(discardedTile.playerId)}</span>
-                      <span className="text-lg leading-none">▼</span>
+                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 text-yellow-500 text-lg leading-none">
+                      ▼
                     </div>
                   )}
 
@@ -108,7 +144,8 @@ export function CenterArea({
                       w-14 h-16 flex items-center justify-center
                       bg-white text-base font-bold rounded border-2
                       transition-all duration-300
-                      ${isLatest ? 'border-yellow-400 shadow-md scale-105' : 'border-gray-300'}
+                      ${getPlayerBorderColor(discardedTile.playerId)}
+                      ${isLatest ? 'shadow-md scale-105 ring-2 ring-yellow-400' : ''}
                     `}
                     style={{
                       animation: `fadeIn 0.3s ease-out ${index * 0.05}s backwards`,
