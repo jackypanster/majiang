@@ -259,10 +259,13 @@ export function PlayerHand({
 
               return (
                 <div key={key} className="relative flex flex-col items-center">
-                  {/* 最后摸牌标识 - 显示向下箭头 */}
+                  {/* T079: 最新摸牌标识 - 显示向下箭头和动画效果 */}
                   {isLastDrawn && (
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-bold text-green-600">
-                      <span className="text-lg leading-none">▼</span>
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-600 animate-bounce">
+                      <span className="text-xl leading-none drop-shadow-lg">▼</span>
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap bg-green-600 text-white px-1 rounded">
+                        新摸
+                      </div>
                     </div>
                   )}
 
@@ -278,12 +281,12 @@ export function PlayerHand({
                           : isLockedTile
                             ? 'bg-gray-300 text-gray-500 border-gray-400 opacity-50'
                             : isLastDrawn
-                              ? 'bg-green-100 text-green-800 border-green-500 ring-2 ring-green-400'
+                              ? 'bg-green-100 text-green-800 border-green-500 ring-2 ring-green-400 shadow-lg shadow-green-300'
                               : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
                       }
                       ${canClick ? 'cursor-pointer' : 'cursor-not-allowed'}
                     `}
-                    title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌)` : tileId}
+                    title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌 - ${isHandLocked ? '手牌锁定时必须打出' : '可以打出'})` : tileId}
                   >
                     {getTileDisplay(tile)}
                   </button>
