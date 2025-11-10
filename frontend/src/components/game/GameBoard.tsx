@@ -851,6 +851,7 @@ export function GameBoard() {
             setWinDetails(null);
           }}
           closable={false}
+          autoDelaySeconds={3}
         />
       )}
     </div>
