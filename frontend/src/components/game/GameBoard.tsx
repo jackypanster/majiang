@@ -848,10 +848,9 @@ export function GameBoard() {
                 </p>
               </div>
 
-              {/* 胜者信息（如果有胡牌的玩家） */}
+              {/* T083: 胜者信息（如果有胡牌的玩家）- 显示番数、得分变化、胡牌次数 */}
               {(() => {
                 const winners = (gameStateData as any).winners || [];
-                const humanWinner = winners.find((w: any) => w.playerId === 'human');
 
                 if (winners.length > 0) {
                   return (
@@ -859,32 +858,46 @@ export function GameBoard() {
                       <h4 className="text-sm font-semibold text-gray-700 text-center">
                         胡牌玩家
                       </h4>
-                      {winners.map((winner: any) => (
-                        <div
-                          key={winner.playerId}
-                          className={`p-3 rounded-lg ${
-                            winner.playerId === 'human'
-                              ? 'bg-green-50 border-2 border-green-500'
-                              : 'bg-blue-50 border border-blue-300'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold">
-                              {winner.playerId === 'human' ? '你' : winner.playerId}
-                            </span>
-                            <div className="text-right text-sm">
-                              <div className="text-gray-600">
-                                番数: {winner.fanCount}
+                      {winners.map((winner: any) => {
+                        // T083: 计算胡牌次数（从 player.huTiles 长度获取）
+                        const player = gameStateData.players.find(p => p.playerId === winner.playerId);
+                        const huCount = player?.huTiles?.length || 0;
+
+                        return (
+                          <div
+                            key={winner.playerId}
+                            className={`p-3 rounded-lg ${
+                              winner.playerId === 'human'
+                                ? 'bg-green-50 border-2 border-green-500'
+                                : 'bg-blue-50 border border-blue-300'
+                            }`}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-semibold">
+                                  {winner.playerId === 'human' ? '你' : winner.playerId}
+                                </span>
+                                {/* T083: 显示胡牌次数 */}
+                                {huCount > 0 && (
+                                  <span className="ml-2 text-xs text-gray-600">
+                                    (胡{huCount}次)
+                                  </span>
+                                )}
                               </div>
-                              <div className={`font-bold ${
-                                winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}分
+                              <div className="text-right text-sm">
+                                <div className="text-gray-600">
+                                  番数: {winner.fanCount}番
+                                </div>
+                                <div className={`font-bold ${
+                                  winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                  {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}分
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   );
                 }
@@ -918,15 +931,15 @@ export function GameBoard() {
                 </div>
               </div>
 
-              {/* 提示信息 */}
+              {/* T083: 提示信息 - 说明刷新即可重新开始 */}
               <div className="text-center text-xs text-gray-500 pt-2">
-                点击"再来一局"开始新游戏
+                点击按钮或刷新浏览器开始新游戏
               </div>
             </div>
           }
-          confirmText="再来一局"
+          confirmText="重新开始"
           onConfirm={() => {
-            // T084 will implement this logic
+            // T083: 简单的浏览器刷新即可（无需额外的游戏逻辑）
             setShowFinalScoreModal(false);
             window.location.reload();
           }}
