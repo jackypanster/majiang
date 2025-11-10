@@ -252,8 +252,9 @@ export function PlayerHand({
               // 判断是否是最后摸的牌（只标记第一个匹配的，避免重复标记）
               const isLastDrawn = originalIndex === firstMatchingIndex;
 
-              // 已胡牌模式下：只能打出最后摸的牌，其他牌锁定显示为灰色
-              const isLockedTile = isHu && !isLastDrawn;
+              // T078: 手牌锁定状态出牌限制
+              // 手牌锁定后：只能打出最后摸的牌（摸什么打什么），其他暗牌禁用点击
+              const isLockedTile = isHandLocked && !isLastDrawn;
               const canClick = !disabled && !isLockedTile && (selectable || isPlayerTurn);
 
               return (
