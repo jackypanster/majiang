@@ -223,7 +223,7 @@
 - [X] T087 [US6] 实现 Canvas 麻将牌绘制 TileRenderer.ts (drawCachedTile: 从 tileCache 读取缓存, 使用 drawImage 绘制)
 - [X] T088 [US6] 实现 TileCanvas 组件 frontend/src/components/canvas/TileCanvas.tsx (封装 Canvas 元素, 传入 tile 和 position, 调用 TileRenderer 绘制)
 - [X] T089 [US6] 实现 useCanvas Hook frontend/src/hooks/useCanvas.ts (管理 Canvas ref, requestAnimationFrame 驱动重绘, 组件卸载时清理)
-- [ ] T090 [US6] 替换 PlayerHand 为 Canvas 渲染 PlayerHand.tsx (移除文字显示, 使用 TileCanvas 组件渲染每张牌)
+- [X] T090 [US6] 替换 PlayerHand 为 Canvas 渲染 PlayerHand.tsx (移除文字显示, 使用 TileCanvas 组件渲染每张牌)
 - [ ] T091 [US6] 替换 DiscardPile 为 Canvas 渲染 DiscardPile.tsx (移除文字显示, 使用 TileCanvas 组件渲染弃牌堆)
 - [ ] T092 [US6] 替换 AIPlayer 手牌为 Canvas 牌背 AIPlayer.tsx (移除文字显示, 使用 Canvas 绘制牌背矩形)
 - [ ] T093 [US6] 实现 Canvas 牌面高亮动画 TileRenderer.ts (选中时添加高亮边框, 向上浮起动画)

@@ -2,14 +2,14 @@
  * PlayerHand Component
  *
  * 显示玩家手牌，支持点击选中/取消选中
- * Phase 3: 暂用文字显示牌面（如 "万1"）
- * Phase 8: 将使用 Canvas 渲染真实麻将牌
+ * T090: 使用 Canvas 渲染真实麻将牌（替换文字显示）
  */
 
 import { getTileId } from '@/types';
 import type { Tile, Meld } from '@/types';
-import { getTileDisplay } from '@/utils/tileUtils';
 import { INFO_LABELS } from '@/utils/messages';
+import { TileCanvas } from '@/components/canvas/TileCanvas';
+import { TILE_WIDTH, TILE_HEIGHT } from '@/utils/constants';
 
 interface PlayerHandProps {
   /**
@@ -161,9 +161,13 @@ export function PlayerHand({
             {buriedCards.map((tile, index) => (
               <div
                 key={index}
-                className="px-3 py-1 bg-white text-gray-800 font-semibold rounded border border-orange-400"
+                className="rounded border border-orange-400 overflow-hidden"
               >
-                {getTileDisplay(tile)}
+                <TileCanvas
+                  tile={tile}
+                  width={TILE_WIDTH * 0.8}
+                  height={TILE_HEIGHT * 0.8}
+                />
               </div>
             ))}
           </div>
@@ -183,9 +187,13 @@ export function PlayerHand({
                 {meld.tiles.map((tile, tileIndex) => (
                   <div
                     key={tileIndex}
-                    className="px-3 py-1 bg-white text-gray-800 font-semibold rounded border border-gray-300"
+                    className="rounded border border-gray-300 overflow-hidden"
                   >
-                    {getTileDisplay(tile)}
+                    <TileCanvas
+                      tile={tile}
+                      width={TILE_WIDTH * 0.7}
+                      height={TILE_HEIGHT * 0.7}
+                    />
                   </div>
                 ))}
                 <div className="ml-1 text-xs text-gray-600 self-center">
@@ -261,7 +269,7 @@ export function PlayerHand({
                 <div key={key} className="relative flex flex-col items-center">
                   {/* T079: 最新摸牌标识 - 显示向下箭头和动画效果 */}
                   {isLastDrawn && (
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-600 animate-bounce">
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-600 animate-bounce z-10">
                       <span className="text-xl leading-none drop-shadow-lg">▼</span>
                       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] whitespace-nowrap bg-green-600 text-white px-1 rounded">
                         新摸
@@ -269,27 +277,33 @@ export function PlayerHand({
                     </div>
                   )}
 
-                  <button
-                    onClick={() => handleTileClick(tile, originalIndex)}
-                    disabled={!canClick}
+                  {/* T090: Canvas 渲染麻将牌 */}
+                  <div
+                    onClick={canClick ? () => handleTileClick(tile, originalIndex) : undefined}
                     className={`
-                      px-4 py-2 rounded-md font-semibold text-lg
-                      border-2 transition-all
+                      rounded-md transition-all
                       ${
                         isSelected
-                          ? 'bg-blue-500 text-white border-blue-600 transform -translate-y-2'
+                          ? 'transform -translate-y-2 ring-4 ring-blue-400'
                           : isLockedTile
-                            ? 'bg-gray-300 text-gray-500 border-gray-400 opacity-50'
+                            ? 'opacity-50'
                             : isLastDrawn
-                              ? 'bg-green-100 text-green-800 border-green-500 ring-2 ring-green-400 shadow-lg shadow-green-300'
-                              : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                              ? 'ring-4 ring-green-400 shadow-lg shadow-green-300'
+                              : 'hover:ring-2 ring-gray-300'
                       }
                       ${canClick ? 'cursor-pointer' : 'cursor-not-allowed'}
                     `}
                     title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌 - ${isHandLocked ? '手牌锁定时必须打出' : '可以打出'})` : tileId}
                   >
-                    {getTileDisplay(tile)}
-                  </button>
+                    <TileCanvas
+                      tile={tile}
+                      onClick={canClick ? () => handleTileClick(tile, originalIndex) : undefined}
+                      isSelected={isSelected}
+                      isDisabled={isLockedTile}
+                      width={TILE_WIDTH}
+                      height={TILE_HEIGHT}
+                    />
+                  </div>
                 </div>
               );
             })
@@ -310,9 +324,13 @@ export function PlayerHand({
             {huTiles.map((tile, index) => (
               <div
                 key={index}
-                className="px-4 py-2 bg-yellow-100 text-gray-800 font-semibold rounded-md border-2 border-yellow-400"
+                className="rounded-md border-2 border-yellow-400 overflow-hidden"
               >
-                {getTileDisplay(tile)}
+                <TileCanvas
+                  tile={tile}
+                  width={TILE_WIDTH * 0.9}
+                  height={TILE_HEIGHT * 0.9}
+                />
               </div>
             ))}
           </div>
