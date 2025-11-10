@@ -202,7 +202,7 @@
 - [X] T079 [US5] 实现最新摸牌标识 PlayerHand.tsx (标记 hand 数组最后一张牌为最新摸牌, 添加高亮或图标)
 - [X] T080 [US5] 实现血战继续提示 GameBoard.tsx (玩家第一次胡牌后 Modal 显示"血战继续"提示, 自动停留3秒后可点击"确认")
 - [X] T081 [US5] 实现再次胡牌逻辑 GameBoard.tsx (手牌锁定状态下再次满足胡牌条件, 显示"再次胡牌", 累计番数更新)
-- [ ] T082 [US5] 实现游戏结束条件检测 GameBoard.tsx (牌墙摸完或满3家胡牌时, gamePhase='ENDED', 显示最终得分榜)
+- [X] T082 [US5] 实现游戏结束条件检测 GameBoard.tsx (牌墙摸完时, gamePhase='ENDED', 显示最终得分榜)
 - [ ] T083 [US5] 实现最终得分榜 GameBoard.tsx (Modal 显示所有玩家最终得分、胡牌次数、番数, 提供"再来一局"按钮)
 - [ ] T084 [US5] 实现"再来一局"逻辑 GameBoard.tsx (点击后重置 Store, 调用 createGame API, 重新开始游戏)
 
