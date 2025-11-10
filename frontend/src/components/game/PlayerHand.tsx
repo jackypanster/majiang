@@ -9,6 +9,7 @@
 import { getTileId } from '@/types';
 import type { Tile, Meld } from '@/types';
 import { getTileDisplay } from '@/utils/tileUtils';
+import { INFO_LABELS } from '@/utils/messages';
 
 interface PlayerHandProps {
   /**
@@ -63,6 +64,10 @@ interface PlayerHandProps {
    * 最后摸的牌（用于"摸什么打什么"高亮显示）
    */
   lastDrawnTile?: Tile | null;
+  /**
+   * 手牌是否锁定（血战到底模式，第一次胡牌后手牌锁定）
+   */
+  isHandLocked?: boolean;
 }
 
 interface PlayerHandInternalProps extends PlayerHandProps {
@@ -90,6 +95,7 @@ export function PlayerHand({
   disabled = false,
   isHu = false,
   lastDrawnTile = null,
+  isHandLocked = false,
   isSelectedByIndex,
   onTileClickWithIndex,
 }: PlayerHandInternalProps) {
@@ -195,16 +201,27 @@ export function PlayerHand({
         </div>
       )}
 
-      {/* 手牌区域 - 中间 */}
-      <div className="flex flex-col gap-2 flex-1">
+      {/* 手牌区域 - 中间 - T077: 添加手牌锁定 UI 标识 */}
+      <div className={`flex flex-col gap-2 flex-1 ${isHandLocked ? 'relative' : ''}`}>
+        {/* T077: 手牌锁定标识 - 显著的视觉提示 */}
+        {isHandLocked && (
+          <div className="absolute -top-2 -left-2 -right-2 -bottom-2 border-4 border-red-500 rounded-lg pointer-events-none z-10 animate-pulse"></div>
+        )}
+
         <h3 className="text-sm font-semibold text-gray-700">
           我的手牌（{hand.length}张）
+          {/* T077: 手牌锁定标签 */}
+          {isHandLocked && (
+            <span className="ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded border-2 border-red-700">
+              🔒 {INFO_LABELS.HAND_LOCKED}
+            </span>
+          )}
           {selectable && (
             <span className="ml-2 text-xs text-blue-600 font-normal">
               - 请选择3张埋牌
             </span>
           )}
-          {!selectable && isHu && (
+          {!selectable && isHu && !isHandLocked && (
             <span className="ml-2 text-xs text-yellow-600 font-normal">
               - 已胡牌，摸什么打什么
             </span>
