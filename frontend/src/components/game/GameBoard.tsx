@@ -45,7 +45,10 @@ export function GameBoard() {
   const [winDetails, setWinDetails] = useState<{
     isBloodBattle: boolean;
     winners: Array<{ playerId: string; fanCount: number; scoreChange: number }>;
+    isSubsequentWin?: boolean; // T081: 是否为再次胡牌
   } | null>(null);
+  // T081: 跟踪玩家已胡牌次数（用于检测再次胡牌）
+  const [previousHuCount, setPreviousHuCount] = useState(0);
 
   const gameId = useGameStore((s) => s.gameId);
   const setGameId = useGameStore((s) => s.setGameId);
@@ -218,7 +221,7 @@ export function GameBoard() {
     return detectKongOptions(humanPlayer, isPlayerTurn);
   }, [gameStateData]);
 
-  // T064: 监听游戏状态变化，检测胡牌事件（必须在所有条件返回之前）
+  // T064 + T081: 监听游戏状态变化，检测胡牌事件（包括再次胡牌）
   useEffect(() => {
     if (!gameStateData || gameStateData.players.length === 0) return;
 
@@ -230,17 +233,34 @@ export function GameBoard() {
       const humanWinner = winners.find((w: any) => w.playerId === 'human');
 
       if (humanWinner) {
+        // T081: 检测是否为再次胡牌
+        // 当前已胡牌次数 = huTiles.length（已胡的牌存储在 huTiles 中）
+        const currentHuCount = humanPlayer?.huTiles?.length || 0;
+        const isSubsequentWin = previousHuCount > 0 && currentHuCount > previousHuCount;
+
         // 判断是否血战继续
         const isBloodBattle = gameStateData.gamePhase === GamePhase.PLAYING;
+
+        logger.log('[GameBoard] Win detected', {
+          currentHuCount,
+          previousHuCount,
+          isSubsequentWin,
+          isBloodBattle,
+          humanWinner,
+        });
 
         setWinDetails({
           isBloodBattle,
           winners,
+          isSubsequentWin, // T081: 标记是否为再次胡牌
         });
         setShowWinModal(true);
+
+        // T081: 更新已胡牌次数（用于下次检测）
+        setPreviousHuCount(currentHuCount);
       }
     }
-  }, [gameStateData]);
+  }, [gameStateData, previousHuCount]);
 
   // 处理开始游戏
   const handleStartGame = async () => {
@@ -804,7 +824,13 @@ export function GameBoard() {
             <div className="space-y-4">
               <div className="text-center">
                 <p className="text-2xl font-bold text-green-600 mb-2">
-                  {winDetails.isBloodBattle ? '🎉 恭喜胡牌！血战继续' : '🎉 恭喜胡牌！'}
+                  {/* T081: 区分首次胡牌和再次胡牌 */}
+                  {winDetails.isSubsequentWin
+                    ? '🎊 再次胡牌！继续血战'
+                    : winDetails.isBloodBattle
+                      ? '🎉 恭喜胡牌！血战继续'
+                      : '🎉 恭喜胡牌！'
+                  }
                 </p>
               </div>
 
@@ -825,7 +851,13 @@ export function GameBoard() {
                       </span>
                       <div className="text-right">
                         <div className="text-sm text-gray-600">
+                          {/* T081: 显示本次番数 */}
                           {INFO_LABELS.FAN_COUNT}: {winner.fanCount}
+                          {winDetails.isSubsequentWin && (
+                            <span className="ml-1 text-xs text-orange-600">
+                              (本次)
+                            </span>
+                          )}
                         </div>
                         <div className={`text-lg font-bold ${
                           winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
@@ -840,7 +872,11 @@ export function GameBoard() {
 
               {winDetails.isBloodBattle && (
                 <div className="text-center text-sm text-gray-600 mt-4">
-                  血战到底模式：游戏继续，摸什么打什么
+                  {/* T081: 区分首次和再次胡牌的提示文字 */}
+                  {winDetails.isSubsequentWin
+                    ? '血战到底模式：继续游戏，累计番数'
+                    : '血战到底模式：游戏继续，摸什么打什么'
+                  }
                 </div>
               )}
             </div>
