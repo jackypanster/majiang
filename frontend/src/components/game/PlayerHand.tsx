@@ -279,7 +279,6 @@ export function PlayerHand({
 
                   {/* T090: Canvas 渲染麻将牌 */}
                   <div
-                    onClick={canClick ? () => handleTileClick(tile, originalIndex) : undefined}
                     className={`
                       rounded-md transition-all
                       ${
@@ -291,7 +290,6 @@ export function PlayerHand({
                               ? 'ring-4 ring-green-400 shadow-lg shadow-green-300'
                               : 'hover:ring-2 ring-gray-300'
                       }
-                      ${canClick ? 'cursor-pointer' : 'cursor-not-allowed'}
                     `}
                     title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌 - ${isHandLocked ? '手牌锁定时必须打出' : '可以打出'})` : tileId}
                   >
