@@ -133,6 +133,30 @@ export function GameBoard() {
     }
   }, [gameStateData, setPlayerTurn]);
 
+  // T076: 手牌锁定状态检测
+  // 检测玩家是否第一次胡牌，标记为手牌锁定状态
+  const isHandLocked = useMemo(() => {
+    if (!gameStateData || gameStateData.gamePhase !== GamePhase.PLAYING) {
+      return false;
+    }
+
+    const humanPlayer = gameStateData.players.find(p => p.playerId === 'human');
+    if (!humanPlayer) {
+      return false;
+    }
+
+    // 玩家胡牌后且游戏仍在进行中（血战模式），手牌锁定
+    const locked = humanPlayer.isHu && gameStateData.gamePhase === GamePhase.PLAYING;
+
+    logger.log('[GameBoard] Hand lock state', {
+      isHu: humanPlayer.isHu,
+      gamePhase: gameStateData.gamePhase,
+      isHandLocked: locked,
+    });
+
+    return locked;
+  }, [gameStateData]);
+
   // 监听窗口尺寸变化
   useEffect(() => {
     const handleResize = () => {
@@ -732,6 +756,7 @@ export function GameBoard() {
                 disabled={isSubmitting}
                 isHu={humanPlayer.isHu}
                 lastDrawnTile={humanPlayer.lastDrawnTile}
+                isHandLocked={isHandLocked}
               />
             )}
 

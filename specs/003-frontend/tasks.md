@@ -196,7 +196,7 @@
 
 ### 实现任务
 
-- [ ] T076 [US5] 实现手牌锁定状态检测 GameBoard.tsx (检查 player.isHu, 第一次胡牌后标记为手牌锁定状态)
+- [X] T076 [US5] 实现手牌锁定状态检测 GameBoard.tsx (检查 player.isHu, 第一次胡牌后标记为手牌锁定状态)
 - [ ] T077 [US5] 实现手牌锁定 UI 标识 PlayerHand.tsx (手牌区域显示"已锁定"标签, 带视觉提示如红色边框)
 - [ ] T078 [US5] 实现锁定状态出牌限制 PlayerHand.tsx (手牌锁定后仅允许点击最新摸到的牌, 其他暗牌禁用点击)
 - [ ] T079 [US5] 实现最新摸牌标识 PlayerHand.tsx (标记 hand 数组最后一张牌为最新摸牌, 添加高亮或图标)
