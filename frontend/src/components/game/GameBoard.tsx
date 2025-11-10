@@ -49,6 +49,8 @@ export function GameBoard() {
   } | null>(null);
   // T081: 跟踪玩家已胡牌次数（用于检测再次胡牌）
   const [previousHuCount, setPreviousHuCount] = useState(0);
+  // T082: 游戏结束状态（牌墙摸完）
+  const [showFinalScoreModal, setShowFinalScoreModal] = useState(false);
 
   const gameId = useGameStore((s) => s.gameId);
   const setGameId = useGameStore((s) => s.setGameId);
@@ -261,6 +263,24 @@ export function GameBoard() {
       }
     }
   }, [gameStateData, previousHuCount]);
+
+  // T082: 监听游戏结束条件（牌墙摸完）
+  useEffect(() => {
+    if (!gameStateData) return;
+
+    // 游戏结束条件：gamePhase 变为 ENDED
+    // 注意：结束条件由后端判断（牌墙摸完），前端仅负责检测和显示
+    if (gameStateData.gamePhase === GamePhase.ENDED && !showFinalScoreModal) {
+      logger.log('[GameBoard] Game ended detected', {
+        gamePhase: gameStateData.gamePhase,
+        wallRemaining: gameStateData.wallRemainingCount,
+        winners: (gameStateData as any).winners,
+      });
+
+      // 显示最终得分榜 Modal
+      setShowFinalScoreModal(true);
+    }
+  }, [gameStateData, showFinalScoreModal]);
 
   // 处理开始游戏
   const handleStartGame = async () => {
@@ -811,6 +831,108 @@ export function GameBoard() {
           </div>
         </div>
       </div>
+
+      {/* T082: 游戏结束最终得分榜 Modal */}
+      {showFinalScoreModal && gameStateData && gameStateData.gamePhase === GamePhase.ENDED && (
+        <Modal
+          title="🏁 游戏结束"
+          content={
+            <div className="space-y-4">
+              {/* 游戏结束原因 */}
+              <div className="text-center">
+                <p className="text-xl font-bold text-blue-600 mb-2">
+                  牌墙已空，游戏结束
+                </p>
+                <p className="text-sm text-gray-500">
+                  游戏ID: {gameId}
+                </p>
+              </div>
+
+              {/* 胜者信息（如果有胡牌的玩家） */}
+              {(() => {
+                const winners = (gameStateData as any).winners || [];
+                const humanWinner = winners.find((w: any) => w.playerId === 'human');
+
+                if (winners.length > 0) {
+                  return (
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-700 text-center">
+                        胡牌玩家
+                      </h4>
+                      {winners.map((winner: any) => (
+                        <div
+                          key={winner.playerId}
+                          className={`p-3 rounded-lg ${
+                            winner.playerId === 'human'
+                              ? 'bg-green-50 border-2 border-green-500'
+                              : 'bg-blue-50 border border-blue-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold">
+                              {winner.playerId === 'human' ? '你' : winner.playerId}
+                            </span>
+                            <div className="text-right text-sm">
+                              <div className="text-gray-600">
+                                番数: {winner.fanCount}
+                              </div>
+                              <div className={`font-bold ${
+                                winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}分
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-center">
+                    <p className="text-sm text-yellow-800">流局：无人胡牌</p>
+                  </div>
+                );
+              })()}
+
+              {/* 最终得分榜 */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-700 text-center">
+                  最终得分
+                </h4>
+                <div className="space-y-1">
+                  {gameStateData.players.map((player) => (
+                    <div
+                      key={player.playerId}
+                      className={`p-3 rounded-lg flex justify-between items-center ${
+                        player.playerId === 'human'
+                          ? 'bg-blue-100 border-2 border-blue-500 font-bold'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <span>{player.playerId === 'human' ? '你' : player.playerId}</span>
+                      <span className="text-lg">{player.score}分</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 提示信息 */}
+              <div className="text-center text-xs text-gray-500 pt-2">
+                点击"再来一局"开始新游戏
+              </div>
+            </div>
+          }
+          confirmText="再来一局"
+          onConfirm={() => {
+            // T084 will implement this logic
+            setShowFinalScoreModal(false);
+            window.location.reload();
+          }}
+          closable={false}
+        />
+      )}
 
       {/* T063: 胡牌结果弹窗 */}
       {showWinModal && winDetails && (
