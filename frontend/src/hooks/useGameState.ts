@@ -35,7 +35,6 @@ export function useGameState(
   options?: UseGameStateOptions
 ) {
   const { enabled = true } = options || {};
-  const isPlayerTurn = useGameStore((s) => s.isPlayerTurn);
 
   return useQuery<GameStateResponse, Error>({
     queryKey: ['gameState', gameId, playerId],
@@ -58,6 +57,8 @@ export function useGameState(
         return false;
       }
       // AI 回合时轮询，玩家回合时停止
+      // ⚠️ FIX: 动态读取 isPlayerTurn，而不是使用闭包捕获的值
+      const isPlayerTurn = useGameStore.getState().isPlayerTurn;
       return !isPlayerTurn ? POLLING_INTERVAL : false;
     },
     // 后台不自动重新获取（避免浪费资源）
