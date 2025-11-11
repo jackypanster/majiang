@@ -5,7 +5,7 @@
  * 位于麻将桌中央，四个玩家环绕
  */
 
-import { getTileDisplay } from '@/utils/tileUtils';
+import { TileCanvas } from '@/components/canvas/TileCanvas';
 import type { DiscardedTile } from '@/types';
 
 interface CenterAreaProps {
@@ -138,20 +138,22 @@ export function CenterArea({
                     </div>
                   )}
 
-                  {/* 弃牌 */}
+                  {/* 弃牌 - 使用 Canvas 渲染 */}
                   <div
                     className={`
-                      w-14 h-16 flex items-center justify-center
-                      bg-white text-base font-bold rounded border-2
                       transition-all duration-300
-                      ${getPlayerBorderColor(discardedTile.playerId)}
-                      ${isLatest ? 'shadow-md scale-105 ring-2 ring-yellow-400' : ''}
+                      ${isLatest ? 'shadow-md scale-105 ring-2 ring-yellow-400 rounded' : ''}
                     `}
                     style={{
                       animation: `fadeIn 0.3s ease-out ${index * 0.05}s backwards`,
                     }}
                   >
-                    {getTileDisplay(discardedTile.tile)}
+                    <TileCanvas
+                      tile={discardedTile.tile}
+                      width={56}
+                      height={64}
+                      className="rounded"
+                    />
                   </div>
                 </div>
               );

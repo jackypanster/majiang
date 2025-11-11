@@ -5,7 +5,7 @@
  * 显示玩家信息、手牌（AI显示背面，人类显示正面）、明牌、当前回合高亮
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getTileDisplay } from '@/utils/tileUtils';
 import type { Player, Tile, Meld } from '@/types';
 
@@ -112,17 +112,66 @@ function renderBuriedCards(
 }
 
 /**
- * 渲染AI手牌（背面）
+ * 牌背 Canvas 组件
+ */
+function CardBackCanvas({ width = 32, height = 40 }: { width?: number; height?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 设置 Canvas 尺寸（考虑高清屏）
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    // 绘制牌背
+    // 背景渐变
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#9ca3af'); // gray-400
+    gradient.addColorStop(1, '#6b7280'); // gray-500
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // 边框
+    ctx.strokeStyle = '#4b5563'; // gray-600
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, width - 2, height - 2);
+
+    // 中心装饰（简单的菱形图案）
+    ctx.fillStyle = '#374151'; // gray-700
+    ctx.beginPath();
+    ctx.moveTo(width / 2, height * 0.3);
+    ctx.lineTo(width * 0.7, height / 2);
+    ctx.lineTo(width / 2, height * 0.7);
+    ctx.lineTo(width * 0.3, height / 2);
+    ctx.closePath();
+    ctx.fill();
+  }, [width, height]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="rounded shadow-sm"
+      style={{ width: `${width}px`, height: `${height}px` }}
+      title="手牌（背面）"
+    />
+  );
+}
+
+/**
+ * 渲染AI手牌（背面）- 使用 Canvas
  */
 function renderAIHand(handCount: number, orientation: 'horizontal' | 'vertical') {
   return (
     <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} gap-1`}>
       {Array.from({ length: handCount }).map((_, i) => (
-        <div
-          key={i}
-          className="w-8 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded border-2 border-gray-600 shadow-sm"
-          title="手牌（背面）"
-        />
+        <CardBackCanvas key={i} width={32} height={40} />
       ))}
     </div>
   );
