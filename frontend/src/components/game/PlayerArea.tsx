@@ -220,19 +220,19 @@ export function PlayerArea({
         ${isCurrentTurn ? 'border-yellow-500 bg-yellow-50 shadow-lg' : 'border-gray-300 bg-white shadow-md'}
         ${position === 'top' && 'flex-row items-center'}
         ${position === 'bottom' && 'flex-row items-center'}
-        ${position === 'left' && 'flex-col items-center'}
-        ${position === 'right' && 'flex-col-reverse items-center'}
+        ${position === 'left' && 'flex-row items-center'}
+        ${position === 'right' && 'flex-row-reverse items-center'}
       `}
     >
       {/* 玩家信息栏 */}
-      <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} items-center gap-2 text-sm`}>
+      <div className="flex flex-col items-center gap-1 text-sm min-w-[60px]">
         {!isHuman && (
-          <div className="font-bold text-gray-800">
+          <div className="font-bold text-gray-800 text-xs">
             {player.playerId}
           </div>
         )}
         {player.missingSuit && (
-          <div className="text-red-600 font-semibold">
+          <div className="text-red-600 font-semibold text-xs">
             缺{getSuitDisplay(player.missingSuit)}
           </div>
         )}
@@ -260,13 +260,13 @@ export function PlayerArea({
       </div>
 
       {/* 手牌区域 */}
-      {!isHuman && renderAIHand(handCount, orientation)}
+      {!isHuman && renderAIHand(handCount, 'horizontal')}
 
       {/* 埋牌区域 (游戏进行中显示) */}
-      {renderBuriedCards(player.buriedCards, orientation, gamePhase)}
+      {renderBuriedCards(player.buriedCards, 'horizontal', gamePhase)}
 
       {/* 明牌区域 */}
-      {player.melds && renderMelds(player.melds, orientation)}
+      {player.melds && renderMelds(player.melds, 'horizontal')}
     </div>
   );
 }

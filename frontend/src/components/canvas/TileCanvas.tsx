@@ -122,6 +122,61 @@ export function TileCanvas({
     }
   }, [tile, x, y, width, height, isSelected, isDisabled]);
 
+  /**
+   * T094: Canvas click detection with coordinate conversion
+   *
+   * Handles click events on the canvas element and converts
+   * browser coordinates to canvas coordinates, accounting for:
+   * - Canvas CSS size vs actual canvas dimensions
+   * - Device pixel ratio for high-DPI displays
+   * - Canvas position within the viewport
+   */
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    // Skip if disabled or no onClick handler
+    if (isDisabled || !onClick) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Get canvas bounding box in viewport coordinates
+    const rect = canvas.getBoundingClientRect();
+
+    // Convert browser coordinates to canvas coordinates
+    // clientX/Y are relative to viewport
+    const canvasX = event.clientX - rect.left;
+    const canvasY = event.clientY - rect.top;
+
+    // Scale coordinates to match CSS size
+    // (Canvas internal size may differ from CSS size due to DPR)
+    const scaleX = width / rect.width;
+    const scaleY = height / rect.height;
+
+    const actualX = canvasX * scaleX;
+    const actualY = canvasY * scaleY;
+
+    // Check if click is within tile bounds
+    // For single-tile canvas, this is always true if we got here
+    // But we validate for robustness
+    const isWithinBounds =
+      actualX >= 0 &&
+      actualX <= width &&
+      actualY >= 0 &&
+      actualY <= height;
+
+    if (isWithinBounds) {
+      // Log click for debugging (dev mode only)
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TileCanvas] Click detected at canvas(${Math.round(actualX)}, ${Math.round(actualY)}) ` +
+          `for tile ${tile.suit}-${tile.rank}`
+        );
+      }
+
+      // Trigger the onClick callback
+      onClick();
+    }
+  };
+
   return (
     <canvas
       ref={canvasRef}
@@ -133,7 +188,7 @@ export function TileCanvas({
         height: `${height}px`,
         transform: isSelected ? 'translateY(-8px)' : 'translateY(0)',
       }}
-      onClick={onClick && !isDisabled ? onClick : undefined}
+      onClick={handleCanvasClick}
       aria-label={`Tile ${tile.suit}-${tile.rank}`}
     />
   );
