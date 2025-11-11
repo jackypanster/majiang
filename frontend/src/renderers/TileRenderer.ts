@@ -13,9 +13,18 @@ import { getSuitDisplay } from '@/utils/tileUtils';
 export class TileRenderer {
   private tileCache: Map<string, HTMLCanvasElement> = new Map();
 
+  // T096: Pre-computed gradient cache to avoid recreating on every draw
+  private gradientCache: Map<string, CanvasGradient> = new Map();
+
   /**
-   * T085: Draw a single tile to canvas context
+   * T085/T096: Draw a single tile to canvas context (optimized)
    * Draws rectangle, gradient background, border, and suit text
+   *
+   * T096 Optimizations:
+   * - Use integer coordinates consistently
+   * - Cache gradient to avoid recreation
+   * - Batch style changes to minimize context state changes
+   * - Extract repeated style settings
    *
    * @param ctx - Canvas 2D rendering context
    * @param suit - Tile suit (WAN/TIAO/TONG)
@@ -30,44 +39,63 @@ export class TileRenderer {
     width: number = TILE_WIDTH,
     height: number = TILE_HEIGHT
   ): void {
-    // Use integer coordinates to avoid sub-pixel rendering blur
+    // T096: Use integer coordinates consistently to avoid sub-pixel rendering blur
     const x = 0;
     const y = 0;
     const w = Math.floor(width);
     const h = Math.floor(height);
+    const centerX = Math.floor(w / 2);
 
-    // 1. Draw tile background with gradient
-    const gradient = ctx.createLinearGradient(x, y, x, y + h);
-    gradient.addColorStop(0, '#ffffff');
-    gradient.addColorStop(0.5, '#f5f5f5');
-    gradient.addColorStop(1, '#e5e5e5');
+    // Pre-compute integer positions for text
+    const suitTextY = Math.floor(h * 0.3);
+    const rankTextY = Math.floor(h * 0.65);
+
+    // 1. Draw tile background with cached gradient
+    // T096: Reuse gradient from cache instead of creating new one each time
+    const gradientKey = `${w}x${h}`;
+    let gradient = this.gradientCache.get(gradientKey);
+
+    if (!gradient) {
+      gradient = ctx.createLinearGradient(x, y, x, y + h);
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0.5, '#f5f5f5');
+      gradient.addColorStop(1, '#e5e5e5');
+      this.gradientCache.set(gradientKey, gradient);
+    }
 
     ctx.fillStyle = gradient;
     ctx.fillRect(x, y, w, h);
 
-    // 2. Draw tile border
+    // 2 & 3: Draw borders (batch style changes)
+    // T096: Group border operations to minimize context state changes
+
+    // Outer border
     ctx.strokeStyle = '#666666';
     ctx.lineWidth = 2;
     ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
 
-    // 3. Draw inner shadow for depth
+    // Inner shadow for depth
     ctx.strokeStyle = '#cccccc';
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
 
-    // 4. Draw suit text (e.g., "万", "条", "筒")
+    // 4 & 5: Draw text (batch text rendering settings)
+    // T096: Get suit color once and set text properties together
     const suitText = getSuitDisplay(suit);
     const suitColor = TILE_COLORS[suit];
 
+    // Set text properties once for both suit and rank
     ctx.fillStyle = suitColor;
-    ctx.font = `bold ${Math.floor(h * 0.25)}px "PingFang SC", "Microsoft YaHei", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(suitText, x + w / 2, y + h * 0.3);
 
-    // 5. Draw rank number
+    // Draw suit text
+    ctx.font = `bold ${Math.floor(h * 0.25)}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+    ctx.fillText(suitText, centerX, suitTextY);
+
+    // Draw rank number (only update font size, reuse other text settings)
     ctx.font = `bold ${Math.floor(h * 0.4)}px "PingFang SC", "Microsoft YaHei", sans-serif`;
-    ctx.fillText(rank.toString(), x + w / 2, y + h * 0.65);
+    ctx.fillText(rank.toString(), centerX, rankTextY);
   }
 
   /**
@@ -152,10 +180,12 @@ export class TileRenderer {
 
   /**
    * Clear tile cache (useful for cleanup)
+   * T096: Also clear gradient cache
    */
   clearCache(): void {
     this.tileCache.clear();
-    console.log('[TileRenderer] Cache cleared');
+    this.gradientCache.clear();
+    console.log('[TileRenderer] Tile cache and gradient cache cleared');
   }
 
   /**
