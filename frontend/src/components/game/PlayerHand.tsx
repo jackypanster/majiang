@@ -165,8 +165,8 @@ export function PlayerHand({
               >
                 <TileCanvas
                   tile={tile}
-                  width={TILE_WIDTH * 0.8}
-                  height={TILE_HEIGHT * 0.8}
+                  width={TILE_WIDTH * 0.9}
+                  height={TILE_HEIGHT * 0.9}
                 />
               </div>
             ))}
@@ -191,8 +191,8 @@ export function PlayerHand({
                   >
                     <TileCanvas
                       tile={tile}
-                      width={TILE_WIDTH * 0.7}
-                      height={TILE_HEIGHT * 0.7}
+                      width={TILE_WIDTH * 0.9}
+                      height={TILE_HEIGHT * 0.9}
                     />
                   </div>
                 ))}
