@@ -6,9 +6,10 @@
  * - 剩余牌数
  * - 所有玩家分数（实时更新，带动画）
  * - 游戏阶段
+ * T099: 使用 React.memo 优化高频更新组件
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import type { Player } from '@/types';
 
 interface GameInfoProps {
@@ -55,7 +56,46 @@ function getPlayerName(playerId: string): string {
   return playerId in nameMap ? nameMap[playerId] : playerId;
 }
 
-export function GameInfo({
+/**
+ * T099: Custom comparison function for React.memo
+ */
+function arePropsEqual(
+  prevProps: Readonly<GameInfoProps>,
+  nextProps: Readonly<GameInfoProps>
+): boolean {
+  // Compare primitive values
+  if (
+    prevProps.currentPlayerIndex !== nextProps.currentPlayerIndex ||
+    prevProps.wallRemaining !== nextProps.wallRemaining ||
+    prevProps.gamePhase !== nextProps.gamePhase
+  ) {
+    return false;
+  }
+
+  // Compare players array
+  if (prevProps.players !== nextProps.players) {
+    if (prevProps.players.length !== nextProps.players.length) {
+      return false;
+    }
+
+    // Check if any player's score changed (most frequent update)
+    for (let i = 0; i < nextProps.players.length; i++) {
+      const prevPlayer = prevProps.players[i];
+      const nextPlayer = nextProps.players[i];
+
+      if (
+        prevPlayer.playerId !== nextPlayer.playerId ||
+        prevPlayer.score !== nextPlayer.score
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+const GameInfoComponent = function GameInfo({
   currentPlayerIndex,
   players,
   wallRemaining,
@@ -169,6 +209,12 @@ export function GameInfo({
       </div>
     </div>
   );
-}
+};
+
+/**
+ * T099: Memoized GameInfo component
+ * Uses custom comparison function to prevent unnecessary re-renders
+ */
+export const GameInfo = memo(GameInfoComponent, arePropsEqual);
 
 export default GameInfo;
