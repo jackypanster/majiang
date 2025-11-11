@@ -182,8 +182,8 @@ export function PlayerArea({
   position,
   isCurrentTurn,
   isHuman = false,
-  onDiscard,
-  disabled = false,
+  // onDiscard, // T100: Currently unused
+  // disabled = false, // T100: Currently unused
   gamePhase,
 }: PlayerAreaProps) {
   const orientation = position === 'left' || position === 'right' ? 'vertical' : 'horizontal';

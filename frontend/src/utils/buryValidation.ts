@@ -8,7 +8,7 @@
  */
 
 import { areSameSuit } from './tileUtils';
-import { getTileId } from '@/types';
+// import { getTileId } from '@/types'; // T100: Currently unused
 import type { Tile } from '@/types';
 
 export interface BuryValidationResult {
@@ -31,7 +31,7 @@ export interface BuryValidationResult {
  */
 export function validateBuryCards(
   selectedTiles: Tile[],
-  playerHand: Tile[]
+  _playerHand: Tile[] // T100: Currently unused (validation logic simplified)
 ): BuryValidationResult {
   // 1. 检查是否选择了3张牌
   if (selectedTiles.length !== 3) {

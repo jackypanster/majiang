@@ -68,19 +68,6 @@ function getPlayerLabelColor(playerId: string): string {
 }
 
 /**
- * 获取玩家牌边框颜色
- */
-function getPlayerBorderColor(playerId: string): string {
-  const borderMap: Record<string, string> = {
-    human: 'border-blue-400',
-    ai_1: 'border-green-400',
-    ai_2: 'border-red-400',
-    ai_3: 'border-amber-400',
-  };
-  return borderMap[playerId] || 'border-gray-400';
-}
-
-/**
  * T099: Custom comparison function for React.memo
  */
 function arePropsEqual(

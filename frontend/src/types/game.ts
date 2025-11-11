@@ -4,10 +4,10 @@
  * Backend correspondence: src/mahjong/models/game_state.py::GameState
  */
 
-import { createTile } from './tile';
+// import { createTile } from './tile'; // T100: Currently unused
 import { createPlayer } from './player';
 import { createDiscardedTile } from './discarded_tile';
-import type { Tile } from './tile';
+// import type { Tile } from './tile'; // T100: Currently unused
 import type { Player } from './player';
 import type { DiscardedTile } from './discarded_tile';
 
