@@ -283,7 +283,7 @@ export function PlayerHand({
                       rounded-md transition-all
                       ${
                         isSelected
-                          ? 'transform -translate-y-2 ring-4 ring-blue-400'
+                          ? 'transform -translate-y-2'
                           : isLockedTile
                             ? 'opacity-50'
                             : isLastDrawn
