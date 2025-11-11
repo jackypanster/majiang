@@ -228,7 +228,7 @@
 - [X] T092 [US6] 替换 AIPlayer 手牌为 Canvas 牌背 AIPlayer.tsx (移除文字显示, 使用 Canvas 绘制牌背矩形)
 - [X] T093 [US6] 实现 Canvas 牌面高亮动画 TileRenderer.ts (选中时添加高亮边框, 向上浮起动画)
 - [X] T094 [US6] 实现 Canvas 牌面点击检测 TileCanvas.tsx (Canvas onClick 事件, 坐标转换, 检测点击在哪张牌)
-- [ ] T095 [US6] 实现高清屏适配 useCanvas.ts (Canvas 尺寸设置为 CSS 尺寸的 devicePixelRatio 倍, ctx.scale 缩放)
+- [X] T095 [US6] 实现高清屏适配 useCanvas.ts (Canvas 尺寸设置为 CSS 尺寸的 devicePixelRatio 倍, ctx.scale 缩放)
 - [ ] T096 [US6] 优化 Canvas 渲染性能 TileRenderer.ts (使用整数坐标, 提取 fillStyle/strokeStyle 到外部, 避免循环中频繁调用)
 
 **Checkpoint**: 用户故事6完成,所有麻将牌使用 Canvas 渲染
