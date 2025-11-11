@@ -640,7 +640,7 @@ export function GameBoard() {
 
           {/* Player Hand */}
           {humanPlayer.hand && (
-            <div className="mb-6">
+            <div className="relative z-10 mt-32 mb-6">
               <PlayerHand
                 hand={humanPlayer.hand}
                 selectedTiles={selectedTiles}
