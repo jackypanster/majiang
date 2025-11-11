@@ -259,14 +259,14 @@ export function PlayerArea({
         )}
       </div>
 
-      {/* 手牌区域 - 始终横向排列 */}
-      {!isHuman && renderAIHand(handCount, 'horizontal')}
+      {/* 手牌区域 - 根据 position 自动调整方向 */}
+      {!isHuman && renderAIHand(handCount, orientation)}
 
-      {/* 埋牌区域 - 始终横向排列 (游戏进行中显示) */}
-      {renderBuriedCards(player.buriedCards, 'horizontal', gamePhase)}
+      {/* 埋牌区域 - 根据 position 自动调整方向 (游戏进行中显示) */}
+      {renderBuriedCards(player.buriedCards, orientation, gamePhase)}
 
-      {/* 明牌区域 - 始终横向排列 */}
-      {player.melds && renderMelds(player.melds, 'horizontal')}
+      {/* 明牌区域 - 根据 position 自动调整方向 */}
+      {player.melds && renderMelds(player.melds, orientation)}
     </div>
   );
 }
