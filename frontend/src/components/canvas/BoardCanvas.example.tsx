@@ -14,14 +14,26 @@
 
 import { BoardCanvas } from './BoardCanvas';
 import { useGameStore } from '@/stores';
+import { useGameState } from '@/hooks/useGameState';
 import type { Tile } from '@/types';
 
 /**
  * Example: Integrate BoardCanvas into GameBoard component
+ *
+ * IMPORTANT: Demonstrates correct selective subscription pattern for Zustand stores.
+ *
+ * ✅ CORRECT: useGameStore((s) => s.gameId) - subscribes to specific field only
+ * ❌ WRONG: useGameStore() - subscribes to entire store, causes unnecessary re-renders
  */
 export function GameBoardWithLayeredCanvas() {
-  const gameState = useGameStore((s) => s.gameState);
-  const selectedTiles = useGameStore((s) => s.selectedTiles);
+  // T098: Selective subscription pattern - only subscribe to gameId
+  const gameId = useGameStore((s) => s.gameId);
+
+  // Game state is managed by TanStack Query, not Zustand store
+  const { data: gameState } = useGameState(gameId);
+
+  // Selected tiles would come from UI store or local state
+  const selectedTiles: Tile[] = []; // Replace with actual selected tiles logic
 
   const handleTileClick = (tile: Tile, area: 'hand' | 'discard' | 'ai') => {
     if (area === 'hand') {
@@ -34,7 +46,7 @@ export function GameBoardWithLayeredCanvas() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
       <BoardCanvas
-        gameState={gameState}
+        gameState={gameState || null}
         playerIndex={0} // Human player is always index 0
         width={1280} // Adjust based on screen size
         height={720}
@@ -86,14 +98,16 @@ export function GameBoardWithLayeredCanvas() {
  *
  * 1. [ ] Import BoardCanvas in GameBoard.tsx
  * 2. [ ] Replace <PlayerHand>, <AIPlayer>, <DiscardPile> with <BoardCanvas>
- * 3. [ ] Pass gameState from useGameStore
- * 4. [ ] Pass selectedTiles from useTileSelection or store
- * 5. [ ] Implement onTileClick handler (merge existing logic)
- * 6. [ ] Remove unused imports (PlayerHand, AIPlayer, etc.)
- * 7. [ ] Test all interactions (burial, discard, peng/gang/hu)
- * 8. [ ] Verify rendering correctness (tile positions, highlights)
- * 9. [ ] Measure performance improvement (fps, render time)
- * 10. [ ] Update tests if component behavior changed
+ * 3. [ ] Get gameId using selective subscription: useGameStore((s) => s.gameId)
+ * 4. [ ] Get gameState from TanStack Query: useGameState(gameId)
+ * 5. [ ] Pass selectedTiles from useTileSelection or local state
+ * 6. [ ] Implement onTileClick handler (merge existing logic)
+ * 7. [ ] Remove unused imports (PlayerHand, AIPlayer, etc.)
+ * 8. [ ] Verify all store subscriptions use selective pattern
+ * 9. [ ] Test all interactions (burial, discard, peng/gang/hu)
+ * 10. [ ] Verify rendering correctness (tile positions, highlights)
+ * 11. [ ] Measure performance improvement (fps, render time, re-render count)
+ * 12. [ ] Update tests if component behavior changed
  */
 
 /**
