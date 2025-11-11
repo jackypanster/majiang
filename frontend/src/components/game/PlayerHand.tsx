@@ -245,7 +245,7 @@ export function PlayerHand({
             </span>
           )}
         </h3>
-        <div className="flex flex-nowrap gap-2 overflow-x-auto mt-12">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto mt-4">
           {sortedIndexedHand.length === 0 ? (
             <p className="text-gray-500">暂无手牌</p>
           ) : (
@@ -266,7 +266,7 @@ export function PlayerHand({
               const canClick = !disabled && !isLockedTile && (selectable || isPlayerTurn);
 
               return (
-                <div key={key} className="relative flex flex-col items-center pt-16">
+                <div key={key} className={`relative flex flex-col items-center ${selectable && isSelected ? 'pt-16' : 'pt-2'}`}>
                   {/* T079: 最新摸牌标识 - 显示向下箭头和动画效果 */}
                   {isLastDrawn && (
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-600 animate-bounce z-10">
