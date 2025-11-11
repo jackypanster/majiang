@@ -240,7 +240,7 @@
 **目的**: 跨故事的优化和文档更新
 
 - [X] T097 [P] 性能优化: Canvas 分层渲染 frontend/src/components/canvas/BoardCanvas.tsx (底层静态背景, 中层弃牌堆/AI, 顶层玩家手牌, 按需重绘)
-- [ ] T098 [P] 性能优化: Zustand 选择性订阅 (所有组件使用 useGameStore(s => s.field) 而非 useGameStore())
+- [X] T098 [P] 性能优化: Zustand 选择性订阅 (所有组件使用 useGameStore(s => s.field) 而非 useGameStore())
 - [ ] T099 [P] 性能优化: React.memo 优化高频更新组件 (PlayerHand, DiscardPile, GameInfo)
 - [ ] T100 [P] 代码清理: 移除未使用的导入和变量 (ESLint --fix)
 - [ ] T101 [P] 代码清理: 统一命名规范检查 (组件 PascalCase, 函数 camelCase, 常量 UPPER_SNAKE_CASE)
