@@ -186,7 +186,6 @@ export function TileCanvas({
       style={{
         width: `${width}px`,
         height: `${height}px`,
-        transform: isSelected ? 'translateY(-8px)' : 'translateY(0)',
       }}
       onClick={handleCanvasClick}
       aria-label={`Tile ${tile.suit}-${tile.rank}`}
