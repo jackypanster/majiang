@@ -127,10 +127,11 @@ export function TileCanvas({
       ref={canvasRef}
       className={`${className} ${onClick && !isDisabled ? 'cursor-pointer' : ''} ${
         isDisabled ? 'cursor-not-allowed' : ''
-      }`}
+      } ${isSelected ? 'tile-selected' : ''} transition-transform duration-200`}
       style={{
         width: `${width}px`,
         height: `${height}px`,
+        transform: isSelected ? 'translateY(-8px)' : 'translateY(0)',
       }}
       onClick={onClick && !isDisabled ? onClick : undefined}
       aria-label={`Tile ${tile.suit}-${tile.rank}`}
