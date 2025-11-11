@@ -68,7 +68,7 @@ export function canKong(player: Player, targetTile: Tile): boolean {
  * 因为玩家可能想等待更大的牌型（如清一色、对对胡等）。
  * 一旦选择胡牌，手牌结构就固定了，不能再改变。
  */
-export function canHu(player: Player, targetTile: Tile, isPlayerTurn: boolean): boolean {
+export function canHu(player: Player, targetTile: Tile, _isPlayerTurn: boolean): boolean {
   if (!targetTile) {
     logger.log('[canHu] No target tile', { playerId: player.playerId });
     return false;

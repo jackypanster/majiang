@@ -330,7 +330,7 @@ const PlayerHandComponent = function PlayerHand({
           {sortedIndexedHand.length === 0 ? (
             <p className="text-gray-500">暂无手牌</p>
           ) : (
-            sortedIndexedHand.map(({ tile, originalIndex }, sortedIndex) => {
+            sortedIndexedHand.map(({ tile, originalIndex }, _sortedIndex) => {
               const tileId = getTileId(tile);
               // 优先使用基于索引的选中判断（使用原始索引）
               const isSelected = isSelectedByIndex
