@@ -104,7 +104,7 @@ export function CenterArea({
       {/* 弃牌堆 - 占据大部分空间 */}
       <div className="flex flex-col items-center gap-2 w-full flex-1 min-h-0">
         <div className="text-xs font-semibold text-gray-600">弃牌堆</div>
-        <div className="flex flex-wrap gap-4 overflow-y-auto p-3 bg-white/50 rounded w-full h-full content-start">
+        <div className="flex flex-wrap gap-20 overflow-y-auto p-3 bg-white/50 rounded w-full h-full content-start">
           {displayedDiscards.length === 0 ? (
             <div className="w-full text-center text-xs text-gray-400 py-4">
               暂无弃牌
