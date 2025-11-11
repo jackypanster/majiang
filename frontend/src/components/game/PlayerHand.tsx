@@ -178,7 +178,7 @@ export function PlayerHand({
       {melds.length > 0 && (
         <div className="flex flex-col gap-2">
           <h4 className="text-sm font-semibold text-gray-700">明牌</h4>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-row gap-2">
             {melds.map((meld, meldIndex) => (
               <div
                 key={meldIndex}
