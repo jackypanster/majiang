@@ -243,7 +243,7 @@
 - [X] T098 [P] 性能优化: Zustand 选择性订阅 (所有组件使用 useGameStore(s => s.field) 而非 useGameStore())
 - [X] T099 [P] 性能优化: React.memo 优化高频更新组件 (PlayerHand, CenterArea, GameInfo)
 - [X] T100 [P] 代码清理: 移除未使用的导入和变量 (ESLint --fix)
-- [ ] T101 [P] 代码清理: 统一命名规范检查 (组件 PascalCase, 函数 camelCase, 常量 UPPER_SNAKE_CASE)
+- [X] T101 [P] 代码清理: 统一命名规范检查 (组件 PascalCase, 函数 camelCase, 常量 UPPER_SNAKE_CASE)
 - [ ] T102 [P] 重构: 提取重复的 API 调用逻辑到 Hooks (如 useSubmitAction)
 - [ ] T103 [P] 重构: 优化组件结构,减少深层嵌套 (GameBoard 子组件拆分)
 - [ ] T104 [P] 文档更新: 编写 frontend/README.md (项目介绍、安装步骤、开发命令、目录结构)
