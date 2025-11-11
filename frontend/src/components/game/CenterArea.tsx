@@ -3,8 +3,10 @@
  *
  * 中央区域组件，显示弃牌堆、剩余牌数、游戏阶段等信息
  * 位于麻将桌中央，四个玩家环绕
+ * T099: 使用 React.memo 优化高频更新组件
  */
 
+import { memo } from 'react';
 import { TileCanvas } from '@/components/canvas/TileCanvas';
 import type { DiscardedTile } from '@/types';
 
@@ -78,7 +80,49 @@ function getPlayerBorderColor(playerId: string): string {
   return borderMap[playerId] || 'border-gray-400';
 }
 
-export function CenterArea({
+/**
+ * T099: Custom comparison function for React.memo
+ */
+function arePropsEqual(
+  prevProps: Readonly<CenterAreaProps>,
+  nextProps: Readonly<CenterAreaProps>
+): boolean {
+  // Compare primitive values
+  if (
+    prevProps.wallRemaining !== nextProps.wallRemaining ||
+    prevProps.gamePhase !== nextProps.gamePhase ||
+    prevProps.maxDisplay !== nextProps.maxDisplay
+  ) {
+    return false;
+  }
+
+  // Compare publicDiscards array
+  if (prevProps.publicDiscards !== nextProps.publicDiscards) {
+    if (prevProps.publicDiscards.length !== nextProps.publicDiscards.length) {
+      return false;
+    }
+    // Only compare the visible discards (based on maxDisplay)
+    const maxToCompare = nextProps.maxDisplay || nextProps.publicDiscards.length;
+    const startIdx = Math.max(0, nextProps.publicDiscards.length - maxToCompare);
+
+    for (let i = startIdx; i < nextProps.publicDiscards.length; i++) {
+      const prevDiscard = prevProps.publicDiscards[i];
+      const nextDiscard = nextProps.publicDiscards[i];
+
+      if (
+        prevDiscard.tile.suit !== nextDiscard.tile.suit ||
+        prevDiscard.tile.rank !== nextDiscard.tile.rank ||
+        prevDiscard.playerId !== nextDiscard.playerId
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+const CenterAreaComponent = function CenterArea({
   publicDiscards,
   wallRemaining,
   gamePhase,
@@ -177,6 +221,12 @@ export function CenterArea({
       `}</style>
     </div>
   );
-}
+};
+
+/**
+ * T099: Memoized CenterArea component
+ * Uses custom comparison function to prevent unnecessary re-renders
+ */
+export const CenterArea = memo(CenterAreaComponent, arePropsEqual);
 
 export default CenterArea;

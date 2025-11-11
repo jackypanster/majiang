@@ -3,8 +3,10 @@
  *
  * 显示玩家手牌，支持点击选中/取消选中
  * T090: 使用 Canvas 渲染真实麻将牌（替换文字显示）
+ * T099: 使用 React.memo 优化高频更新组件
  */
 
+import { memo } from 'react';
 import { getTileId } from '@/types';
 import type { Tile, Meld } from '@/types';
 import { INFO_LABELS } from '@/utils/messages';
@@ -81,7 +83,86 @@ interface PlayerHandInternalProps extends PlayerHandProps {
   onTileClickWithIndex?: (tile: Tile, index: number) => void;
 }
 
-export function PlayerHand({
+/**
+ * T099: Custom comparison function for React.memo
+ *
+ * Compares props to determine if component should re-render.
+ * Returns true if props are equal (skip render), false if different (re-render).
+ */
+function arePropsEqual(
+  prevProps: Readonly<PlayerHandInternalProps>,
+  nextProps: Readonly<PlayerHandInternalProps>
+): boolean {
+  // Compare primitive values
+  if (
+    prevProps.selectable !== nextProps.selectable ||
+    prevProps.isPlayerTurn !== nextProps.isPlayerTurn ||
+    prevProps.missingSuit !== nextProps.missingSuit ||
+    prevProps.disabled !== nextProps.disabled ||
+    prevProps.isHu !== nextProps.isHu ||
+    prevProps.isHandLocked !== nextProps.isHandLocked
+  ) {
+    return false;
+  }
+
+  // Compare hand array (shallow comparison by reference and length)
+  if (
+    prevProps.hand !== nextProps.hand &&
+    (prevProps.hand.length !== nextProps.hand.length ||
+      prevProps.hand.some((tile, i) => {
+        const nextTile = nextProps.hand[i];
+        return tile.suit !== nextTile.suit || tile.rank !== nextTile.rank;
+      }))
+  ) {
+    return false;
+  }
+
+  // Compare selectedTiles array
+  if (
+    prevProps.selectedTiles !== nextProps.selectedTiles &&
+    (prevProps.selectedTiles.length !== nextProps.selectedTiles.length ||
+      prevProps.selectedTiles.some((tile, i) => {
+        const nextTile = nextProps.selectedTiles[i];
+        return tile.suit !== nextTile.suit || tile.rank !== nextTile.rank;
+      }))
+  ) {
+    return false;
+  }
+
+  // Compare melds array
+  if (
+    prevProps.melds !== nextProps.melds &&
+    (prevProps.melds?.length !== nextProps.melds?.length)
+  ) {
+    return false;
+  }
+
+  // Compare lastDrawnTile
+  if (prevProps.lastDrawnTile !== nextProps.lastDrawnTile) {
+    if (!prevProps.lastDrawnTile || !nextProps.lastDrawnTile) {
+      return false;
+    }
+    if (
+      prevProps.lastDrawnTile.suit !== nextProps.lastDrawnTile.suit ||
+      prevProps.lastDrawnTile.rank !== nextProps.lastDrawnTile.rank
+    ) {
+      return false;
+    }
+  }
+
+  // Compare callback functions (by reference - they should be stable)
+  if (
+    prevProps.onTileClick !== nextProps.onTileClick ||
+    prevProps.onDiscard !== nextProps.onDiscard
+  ) {
+    return false;
+  }
+
+  // All props are equal, skip re-render
+  return true;
+}
+
+const PlayerHandComponent = function PlayerHand({
   hand,
   melds = [],
   huTiles = [],
@@ -336,6 +417,12 @@ export function PlayerHand({
       )}
     </div>
   );
-}
+};
+
+/**
+ * T099: Memoized PlayerHand component
+ * Uses custom comparison function to prevent unnecessary re-renders
+ */
+export const PlayerHand = memo(PlayerHandComponent, arePropsEqual);
 
 export default PlayerHand;
