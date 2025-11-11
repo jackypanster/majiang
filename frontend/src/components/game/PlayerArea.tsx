@@ -216,16 +216,16 @@ export function PlayerArea({
   return (
     <div
       className={`
-        flex gap-3 p-3 rounded-lg border-2 transition-all
+        flex gap-2 p-3 rounded-lg border-2 transition-all
         ${isCurrentTurn ? 'border-yellow-500 bg-yellow-50 shadow-lg' : 'border-gray-300 bg-white shadow-md'}
         ${position === 'top' && 'flex-row items-center'}
         ${position === 'bottom' && 'flex-row items-center'}
-        ${position === 'left' && 'flex-row items-center'}
-        ${position === 'right' && 'flex-row-reverse items-center'}
+        ${position === 'left' && 'flex-col items-center'}
+        ${position === 'right' && 'flex-col items-center'}
       `}
     >
       {/* 玩家信息栏 */}
-      <div className="flex flex-col items-center gap-1 text-sm min-w-[60px]">
+      <div className={`flex ${orientation === 'vertical' ? 'flex-col' : 'flex-row'} items-center gap-1 text-sm`}>
         {!isHuman && (
           <div className="font-bold text-gray-800 text-xs">
             {player.playerId}
@@ -259,13 +259,13 @@ export function PlayerArea({
         )}
       </div>
 
-      {/* 手牌区域 */}
+      {/* 手牌区域 - 始终横向排列 */}
       {!isHuman && renderAIHand(handCount, 'horizontal')}
 
-      {/* 埋牌区域 (游戏进行中显示) */}
+      {/* 埋牌区域 - 始终横向排列 (游戏进行中显示) */}
       {renderBuriedCards(player.buriedCards, 'horizontal', gamePhase)}
 
-      {/* 明牌区域 */}
+      {/* 明牌区域 - 始终横向排列 */}
       {player.melds && renderMelds(player.melds, 'horizontal')}
     </div>
   );
