@@ -5,6 +5,34 @@
 **Status**: Draft
 **Input**: User description: "修复HU计分系统：实现分数转移、回合顺序修正和一炮多响机制"
 
+## Clarifications
+
+### Session 2025-11-12
+
+- Q: What happens when a player wins but the fan calculation results in zero fan? → A: Zero fan HU does not exist. Per PRD §2.5, any valid HU awards at minimum 1 fan (基本胡). The Scorer.calculate_score method guarantees minimum return value of 1.
+- Q: How does the system handle concurrent HU responses when one player has insufficient score to pay all winners? → A: Allow negative scores with no minimum limit. Scores always transfer in full to maintain zero-sum property (total = 400). No partial payment or payment ordering needed.
+- Q: When multiple players declare HU on the same discard, in what order should they be processed? → A: Process in seating order (clockwise), starting from the discarder's next seat. This aligns with traditional mahjong priority rules and turn rotation logic.
+- Q: After multi-HU on a discard, who draws the next tile? → A: The discarder's next seat draws (consistent with FR-005 and Issue #81 fix). The last processed HU winner's position is irrelevant to turn order.
+- Q: Can a player who has already won (is_hu=True) continue to declare HU again in blood-battle mode? → A: Yes. Players can win multiple times, accumulating scores with each HU. This is the core blood-battle mechanism. Hand is locked (draw-discard only) but HU responses remain valid.
+- Q: Should scoring logic affect core gameplay logic? → A: **No. Scoring must be orthogonal to gameplay.** Score calculation and transfer should never block or alter game flow decisions (HU validation, turn order, tile operations). Scoring is an observer layer, not a controller.
+
+## Design Constraints *(mandatory)*
+
+### Architectural Separation
+
+**Critical Constraint**: Score calculation and transfer logic MUST be architecturally separated from core gameplay logic.
+
+- **Gameplay decisions** (HU validation, turn order, tile drawing, player responses) MUST NOT depend on score values or score calculation results
+- **Score transfer** is executed AFTER gameplay state changes are committed (e.g., after is_hu flag is set, after current_player_index is updated)
+- **Score calculation errors** (if any) MUST NOT block game progression; zero-sum validation failures should log errors but not prevent turn advancement
+- **Scoring is an observer**: The scoring system observes HU events and updates player scores as a side effect, without influencing game rules or flow
+
+**Rationale**: This separation ensures:
+1. Core game logic remains testable independently of scoring complexity
+2. Score calculation bugs cannot corrupt game state or cause deadlocks
+3. Future scoring rule changes do not require modifications to core game engine
+4. Clear responsibility boundaries between game mechanics and accounting
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Score Transfer on Winning (Priority: P0)
@@ -55,9 +83,9 @@ When multiple players have ready hands that can win on the same discarded tile, 
 
 **Acceptance Scenarios**:
 
-1. **Given** players P2 and P3 both have ready hands that can win on P1's discard, **When** P1 discards the winning tile, **Then** both P2 and P3 are marked as winners (is_hu=True), P1's score is reduced by the sum of both fan values, and P2 and P3's scores each increase by their respective fan values
+1. **Given** players P2 and P3 both have ready hands that can win on P1's discard, **When** P1 discards the winning tile, **Then** both P2 and P3 are marked as winners (is_hu=True), processed in seating order (P2 then P3), P1's score is reduced by the sum of both fan values, and P2 and P3's scores each increase by their respective fan values
 
-2. **Given** three players (P2, P3, P4) can all win on P1's discard with different fan counts, **When** P1 discards the winning tile, **Then** all three players win, P1 pays each player their calculated fan value, and the zero-sum property is maintained
+2. **Given** three players (P2, P3, P4) can all win on P1's discard with different fan counts, **When** P1 discards the winning tile, **Then** all three players win (processed in order P2, P3, P4), P1 pays each player their calculated fan value, and the zero-sum property is maintained
 
 3. **Given** multiple players declare HU on the same discard, **When** the responses are processed, **Then** HU responses take priority over KONG and PONG responses, and all HU responses are executed (not just the first one)
 
@@ -65,11 +93,11 @@ When multiple players have ready hands that can win on the same discarded tile, 
 
 ### Edge Cases
 
-- What happens when a player wins but the fan calculation results in zero fan (edge case in scoring logic)?
-- How does the system handle concurrent HU responses when one player has insufficient score to pay all winners?
-- What happens if the discard_player_id is None during a discard HU (validation error)?
-- How does the system differentiate between self-draw HU and discard HU when target_tile is the same?
-- What happens when the last player standing wins by self-draw after three others have already won (blood-battle end condition)?
+- **Negative scores in multi-HU**: Player scores can become negative when paying multiple winners. System always transfers full amounts to maintain zero-sum property, with no minimum score floor.
+- **Missing discard_player_id**: If discard_player_id is None during a discard HU, system raises InvalidActionError (per FR-011).
+- **Self-draw vs discard differentiation**: System determines HU type by presence of discard_player_id parameter (None = self-draw, provided = discard).
+- **Blood-battle end condition**: When the last non-winning player declares HU after three others have won, standard scoring rules apply, game continues until wall is empty.
+- **Multiple HU by same player**: Players who have already won (is_hu=True) can continue to declare HU and win additional times, accumulating scores with each win while maintaining hand-locked draw-discard only gameplay.
 
 ## Requirements *(mandatory)*
 
@@ -89,7 +117,7 @@ When multiple players have ready hands that can win on the same discarded tile, 
 
 - **FR-007**: System MUST detect when multiple players respond with ActionType.HU to the same discard
 
-- **FR-008**: System MUST execute score settlement for all players who declare HU on the same discard (multi-HU)
+- **FR-008**: System MUST execute score settlement for all players who declare HU on the same discard (multi-HU), processing winners in seating order clockwise from the discarder's next seat
 
 - **FR-009**: System MUST mark all winners as is_hu=True when multiple players win on the same discard
 
@@ -101,7 +129,9 @@ When multiple players have ready hands that can win on the same discarded tile, 
 
 - **FR-013**: System MUST prioritize HU responses over KONG and PONG responses when processing player responses
 
-- **FR-014**: System MUST handle the next player draw correctly after multi-HU: only the last processed HU winner triggers the next draw
+- **FR-014**: System MUST handle the next player draw correctly after multi-HU: after processing all HU winners, set current_player_index to the discarder's next seat (not the last HU winner's next seat), and that player draws the next tile
+
+- **FR-015**: System MUST maintain architectural separation between scoring and gameplay: score calculation and transfer operations MUST execute after gameplay state changes are finalized (is_hu flag set, current_player_index updated, tiles drawn), and MUST NOT influence gameplay decisions or block game flow
 
 ### Key Entities
 
@@ -126,12 +156,14 @@ When multiple players have ready hands that can win on the same discarded tile, 
 
 - **SC-006**: All existing unit tests continue to pass, and new tests covering score settlement, turn order, and multi-HU scenarios achieve 100% pass rate
 
+- **SC-007**: Gameplay logic tests (HU validation, turn order, tile operations) can execute successfully with scoring logic disabled or mocked, demonstrating architectural independence
+
 ## Assumptions
 
-- The Scorer.calculate_score method is already correctly implemented and returns accurate fan values
+- The Scorer.calculate_score method is already correctly implemented and returns accurate fan values (minimum 1 fan for any valid HU per PRD §2.5)
 - The game always has exactly 4 players
 - Player scores can go negative (no minimum score constraint)
-- The is_hu flag on Player marks a player as having won at least once (blood-battle mode)
+- The is_hu flag on Player marks a player as having won at least once (blood-battle mode); players with is_hu=True can continue to win multiple times and accumulate scores
 - Kong flower and last tile flags can be determined from game state context
 - The discard_player_id is always provided when processing a discard HU response
 - Turn rotation follows standard mahjong order: player indices 0 → 1 → 2 → 3 → 0
