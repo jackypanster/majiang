@@ -1,9 +1,12 @@
 from typing import Optional, Dict, Tuple
 from collections import Counter
+import logging
 
 from mahjong.models.player import Player
 from mahjong.models.tile import Tile
 from mahjong.constants.enums import Suit
+
+logger = logging.getLogger(__name__)
 
 
 class WinChecker:
@@ -19,6 +22,30 @@ class WinChecker:
         Returns:
             True if player can hu, False otherwise
         """
+        # 📊 LOG: 胡牌检查开始
+        hand_count = len(player.hand)
+        melds_count = sum(len(m.tiles) for m in player.melds)
+        kong_count = sum(1 for m in player.melds if len(m.tiles) == 4)
+        logger.info(
+            f"[WinChecker] === HU CHECK START === player={player.player_id}, "
+            f"is_hu={player.is_hu}, extra_tile={extra_tile}"
+        )
+        logger.info(
+            f"[WinChecker]   hand_count={hand_count}, hand={player.hand}"
+        )
+        logger.info(
+            f"[WinChecker]   melds_count={melds_count}, melds={player.melds}"
+        )
+        logger.info(
+            f"[WinChecker]   kong_count={kong_count}"
+        )
+        logger.info(
+            f"[WinChecker]   hu_tiles={player.hu_tiles}"
+        )
+        logger.info(
+            f"[WinChecker]   missing_suit={player.missing_suit}"
+        )
+
         # Collect all tiles: hand + melds + extra_tile
         all_tiles = list(player.hand)
         if extra_tile:
@@ -28,6 +55,15 @@ class WinChecker:
         for meld in player.melds:
             all_tiles.extend(meld.tiles)
 
+        # 📊 LOG: 总牌数
+        logger.info(
+            f"[WinChecker]   total_tiles_count={len(all_tiles)} "
+            f"(hand={hand_count} + extra={1 if extra_tile else 0} + melds={melds_count})"
+        )
+        logger.info(
+            f"[WinChecker]   Expected: 10 + kong_count + 1 = {10 + kong_count + 1} tiles for hu"
+        )
+
         if not all_tiles:
             return False
 
@@ -35,15 +71,31 @@ class WinChecker:
         if player.missing_suit:
             for tile in all_tiles:
                 if tile.suit == player.missing_suit:
+                    logger.info(
+                        f"[WinChecker] HU failed: tile {tile} has missing_suit {player.missing_suit}. "
+                        f"all_tiles={all_tiles}"
+                    )
                     return False
 
         # Check 2: Must use at most 2 suits (缺门 = missing one suit)
         suits_used = set(tile.suit for tile in all_tiles)
         if len(suits_used) > 2:
+            logger.info(
+                f"[WinChecker] HU failed: using {len(suits_used)} suits {suits_used}, max allowed is 2. "
+                f"all_tiles={all_tiles}"
+            )
             return False
 
         # Check 3: Valid hand structure (one pair + three sets)
-        return WinChecker._check_hand_structure(all_tiles)
+        structure_valid = WinChecker._check_hand_structure(all_tiles)
+        if not structure_valid:
+            logger.info(
+                f"[WinChecker] HU failed: invalid hand structure. "
+                f"all_tiles ({len(all_tiles)} tiles)={all_tiles}"
+            )
+        else:
+            logger.info(f"[WinChecker] HU success: all checks passed, all_tiles={all_tiles}")
+        return structure_valid
 
     @staticmethod
     def _check_hand_structure(tiles: list[Tile]) -> bool:
@@ -84,8 +136,8 @@ class WinChecker:
         if not counts:
             return True
 
-        # Get first tile to process
-        (suit, rank), count = next(iter(counts.items()))
+        # Get first tile to process (sorted by suit and rank to ensure deterministic order)
+        (suit, rank), count = min(counts.items(), key=lambda x: (x[0][0].value, x[0][1]))
 
         # Try removing a quad (4 same tiles)
         if count >= 4:

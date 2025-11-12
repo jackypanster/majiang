@@ -9,6 +9,7 @@ from mahjong.models.meld import Meld
 from mahjong.models.player import Player
 from mahjong.models.response import PlayerResponse
 from mahjong.models.tile import Tile
+from mahjong.models.discarded_tile import DiscardedTile
 from mahjong.services.win_checker import WinChecker
 from mahjong.services import get_logger
 
@@ -25,6 +26,8 @@ class PlayerActions:
         """
         收集AI玩家对打出牌的响应（1个真人 + 3个AI模式）
 
+        注意：人类玩家（"human"）的响应通过前端UI提交，不在此处自动收集
+
         AI决策策略（简单）：
         1. 能胡 → 胡
         2. 能杠 → 杠
@@ -37,13 +40,17 @@ class PlayerActions:
             discard_player_id: 打牌者ID
 
         Returns:
-            所有玩家的响应列表
+            AI玩家的响应列表（不包括人类玩家）
         """
         responses = []
 
         for player in game_state.players:
             # 跳过打牌者自己
             if player.player_id == discard_player_id:
+                continue
+
+            # 跳过人类玩家（响应通过前端UI提交）
+            if player.player_id == "human":
                 continue
 
             # AI决策：按优先级检查
@@ -95,19 +102,8 @@ class PlayerActions:
 
         # 如果最高优先级是PASS，说明没人响应
         if highest_response.action_type == ActionType.PASS:
-            # 检查牌墙是否为空
-            if not game_state.wall:
-                # 牌墙为空，检查是否有人胡牌
-                hu_count = sum(1 for p in game_state.players if p.is_hu)
-                if hu_count == 0:
-                    # 无人胡牌，流局
-                    from mahjong.services.game_manager import GameManager
-                    return GameManager.end_game(game_state)
-                else:
-                    # 有人胡牌，正常结算
-                    return replace(game_state, game_phase=GamePhase.ENDED)
-
-            # 无人响应，下一个玩家摸牌
+            # 无人响应，尝试让下一个玩家摸牌
+            # _next_player_draw 会检查牌墙是否为空，如果为空则结束游戏
             return PlayerActions._next_player_draw(game_state)
 
         # 有人响应，执行对应操作
@@ -136,23 +132,46 @@ class PlayerActions:
         new_wall = list(game_state.wall)
         new_players = list(game_state.players)
 
+        # 检查牌墙是否为空
+        if not new_wall:
+            # 牌墙为空，游戏结束（血战到底:牌摸完即结束）
+            from mahjong.services.game_manager import GameManager
+            logger.info(f"Game {game_state.game_id}: Wall empty, ending game")
+            return GameManager.end_game(game_state)
+
         # 下一个玩家摸牌
-        if new_wall:
-            drawn_tile = new_wall.pop(0)
-            next_player = new_players[new_current_player_index]
-            updated_next_player_hand = list(next_player.hand)
-            updated_next_player_hand.append(drawn_tile)
-            # 记录最后摸的牌（用于已胡玩家"摸什么打什么"）
-            updated_next_player = replace(
-                next_player,
-                hand=updated_next_player_hand,
-                last_drawn_tile=drawn_tile
-            )
-            new_players[new_current_player_index] = updated_next_player
-        else:
-            # 牌墙为空，触发流局
-            # 注意：这里只是摸不到牌，实际流局判断在 discard_tile 中处理
-            pass
+        next_player = new_players[new_current_player_index]
+
+        # 📊 LOG: 摸牌前
+        logger.info(
+            f"[DRAW] === DRAW TILE START === player={next_player.player_id}, "
+            f"is_hu={next_player.is_hu}"
+        )
+        logger.info(
+            f"[DRAW]   before_hand_count={len(next_player.hand)}, "
+            f"hand={next_player.hand}"
+        )
+
+        drawn_tile = new_wall.pop(0)
+        updated_next_player_hand = list(next_player.hand)
+        updated_next_player_hand.append(drawn_tile)
+
+        # 📊 LOG: 摸牌后
+        logger.info(
+            f"[DRAW]   drawn_tile={drawn_tile}, wall_remaining={len(new_wall)}"
+        )
+        logger.info(
+            f"[DRAW]   after_hand_count={len(updated_next_player_hand)}, "
+            f"hand={updated_next_player_hand}"
+        )
+
+        # 记录最后摸的牌（用于已胡玩家"摸什么打什么"）
+        updated_next_player = replace(
+            next_player,
+            hand=updated_next_player_hand,
+            last_drawn_tile=drawn_tile
+        )
+        new_players[new_current_player_index] = updated_next_player
 
         return replace(
             game_state,
@@ -308,7 +327,7 @@ class PlayerActions:
         )
 
     @staticmethod
-    def discard_tile(game_state: GameState, player_id: str, tile: Tile) -> GameState:
+    def discard_tile(game_state: GameState, player_id: str, tile: Tile, skip_responses: bool = False) -> GameState:
         """
         打牌并处理AI响应（1个真人 + 3个AI模式）
 
@@ -322,6 +341,7 @@ class PlayerActions:
             game_state: 当前游戏状态
             player_id: 打牌者ID
             tile: 打出的牌
+            skip_responses: 如果为True，只打牌不处理响应（用于AI循环中检查人类响应）
 
         Returns:
             更新后的游戏状态
@@ -342,7 +362,14 @@ class PlayerActions:
             )
             raise InvalidActionError(f"It is not player {player_id}'s turn.")
 
-        # 1. 检查牌是否在手牌中
+        # 1. 记录手牌数量用于调试（不阻止游戏）
+        hand_count = len(current_player.hand)
+        logger.info(
+            f"Game {game_state.game_id}: Player {player_id} discarding with hand_count={hand_count}, "
+            f"meld_count={len(current_player.melds)}"
+        )
+
+        # 2. 检查牌是否在手牌中
         if tile not in current_player.hand:
             logger.error(
                 f"Failed in discard_tile (player_actions.py): "
@@ -350,7 +377,7 @@ class PlayerActions:
             )
             raise InvalidActionError(f"Tile {tile} not in player's hand in discard_tile(): {player_id}, {tile}")
 
-        # 2. 已胡玩家摸什么打什么检查（血战规则）
+        # 3. 已胡玩家摸什么打什么检查（血战规则）
         # "所摸之牌必须在本回合立即打出，不能替换手中其他牌"
         if current_player.is_hu and current_player.last_drawn_tile is not None:
             if tile != current_player.last_drawn_tile:
@@ -374,10 +401,27 @@ class PlayerActions:
                 )
 
         # 4. 打牌到弃牌堆
-        logger.info(f"Game {game_state.game_id}: Player {player_id} discarded {tile}")
+        # 📊 LOG: 打牌前
+        logger.info(
+            f"[DISCARD] === DISCARD TILE START === player={player_id}, "
+            f"is_hu={current_player.is_hu}"
+        )
+        logger.info(
+            f"[DISCARD]   before_hand_count={len(current_player.hand)}, "
+            f"hand={current_player.hand}"
+        )
+        logger.info(
+            f"[DISCARD]   discarding_tile={tile}, last_drawn_tile={current_player.last_drawn_tile}"
+        )
 
         new_current_player_hand = list(current_player.hand)
         new_current_player_hand.remove(tile)
+
+        # 📊 LOG: 打牌后
+        logger.info(
+            f"[DISCARD]   after_hand_count={len(new_current_player_hand)}, "
+            f"hand={new_current_player_hand}"
+        )
 
         # 打牌后清除 last_drawn_tile 标记
         updated_current_player = replace(
@@ -387,7 +431,13 @@ class PlayerActions:
         )
 
         new_public_discards = list(game_state.public_discards)
-        new_public_discards.append(tile)
+        # 创建 DiscardedTile 对象，记录打牌者和顺序（用于UI动画）
+        discarded_tile = DiscardedTile(
+            tile=tile,
+            player_id=player_id,
+            turn_index=len(new_public_discards)
+        )
+        new_public_discards.append(discarded_tile)
 
         new_players = list(game_state.players)
         new_players[current_player_index] = updated_current_player
@@ -398,6 +448,11 @@ class PlayerActions:
             players=new_players,
             public_discards=new_public_discards,
         )
+
+        # 如果跳过响应处理，只返回打牌后的状态，不摸牌
+        # 摸牌操作由 api.py 在检查人类响应后，通过 process_responses 执行
+        if skip_responses:
+            return temp_state
 
         # 2. 收集AI响应
         responses = PlayerActions.collect_ai_responses(temp_state, tile, player_id)
@@ -469,18 +524,143 @@ class PlayerActions:
             )
 
         if action_type == ActionType.HU:
+            # 区分自摸和点炮
+            # 自摸：target_tile 已经在手牌中（last_drawn_tile），不需要额外加入
+            # 点炮：target_tile 不在手牌中，需要作为 extra_tile 加入
+            is_self_draw = (player.last_drawn_tile == target_tile)
+
+            # 调试日志：输出详细信息（Issue #75）
+            logger.info(
+                f"[HU Check] Game {game_state.game_id}, Player {player_id}:\n"
+                f"  - is_hu: {player.is_hu}\n"
+                f"  - hand ({len(player.hand)} tiles): {player.hand}\n"
+                f"  - melds ({len(player.melds)}): {player.melds}\n"
+                f"  - hu_tiles ({len(player.hu_tiles)}): {player.hu_tiles}\n"
+                f"  - last_drawn_tile: {player.last_drawn_tile}\n"
+                f"  - target_tile: {target_tile}\n"
+                f"  - is_self_draw: {is_self_draw}"
+            )
+
             # Check if player can win with this tile
-            if not WinChecker.is_hu(player, target_tile):
-                raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile}")
+            if is_self_draw:
+                # 自摸：验证手牌本身（11张），不需要传 extra_tile
+                can_hu = WinChecker.is_hu(player, extra_tile=None)
+                logger.info(f"[HU Check] Self-draw check result: {can_hu}")
+                if not can_hu:
+                    raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile} (self-draw)")
+            else:
+                # 点炮：验证手牌 + 目标牌（10 + 1 = 11张）
+                can_hu = WinChecker.is_hu(player, target_tile)
+                logger.info(f"[HU Check] From-discard check result: {can_hu}")
+                if not can_hu:
+                    raise InvalidActionError(f"Player {player_id} cannot HU with tile {target_tile} (from discard)")
 
-            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully HU (胡牌)")
+            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully HU (胡牌) - {'self-draw' if is_self_draw else 'from discard'}")
 
-            # Update player to mark as won
-            updated_player = replace(player, is_hu=True)
+            # Update player to mark as won and add winning tile to hu_tiles
+            new_hand = list(player.hand)
+            new_hu_tiles = list(player.hu_tiles)
+
+            if is_self_draw:
+                # 自摸：将摸到的牌从手牌移到 hu_tiles（手牌 11→10）
+                # 因为 last_drawn_tile 已经在手牌中，需要移除
+                new_hand.remove(target_tile)
+                new_hu_tiles.append(target_tile)
+                # 📊 LOG: 自摸胡牌后的手牌变化
+                logger.info(
+                    f"[HU AFTER] Self-draw: hand_count changed: "
+                    f"{len(player.hand)} -> {len(new_hand)}, "
+                    f"removed tile={target_tile}"
+                )
+            else:
+                # 点炮：将别人打出的牌加入 hu_tiles（手牌保持10张）
+                # target_tile 不在手牌中，直接加入 hu_tiles
+                new_hu_tiles.append(target_tile)
+                # 📊 LOG: 点炮胡牌后的手牌变化
+                logger.info(
+                    f"[HU AFTER] From-discard: hand_count unchanged: {len(new_hand)}, "
+                    f"added tile to hu_tiles={target_tile}"
+                )
+
+            # 📊 LOG: 胡牌后的总状态
+            melds_count = sum(len(m.tiles) for m in player.melds)
+            kong_count = sum(1 for m in player.melds if len(m.tiles) == 4)
+            logger.info(
+                f"[HU AFTER] === HU ACTION COMPLETE === player={player_id}"
+            )
+            logger.info(
+                f"[HU AFTER]   new_hand_count={len(new_hand)}, new_hand={new_hand}"
+            )
+            logger.info(
+                f"[HU AFTER]   melds_count={melds_count}, melds={player.melds}"
+            )
+            logger.info(
+                f"[HU AFTER]   new_hu_tiles={new_hu_tiles}"
+            )
+            logger.info(
+                f"[HU AFTER]   Total tiles in game: hand({len(new_hand)}) + melds({melds_count}) = {len(new_hand) + melds_count}"
+            )
+            logger.info(
+                f"[HU AFTER]   Expected: 10 + kong_count = {10 + kong_count} tiles (excluding hu_tiles)"
+            )
+
+            updated_player = replace(
+                player,
+                is_hu=True,
+                hand=new_hand,
+                hu_tiles=new_hu_tiles,
+                last_drawn_tile=None  # 清除 last_drawn_tile 标记
+            )
             new_players = list(game_state.players)
             new_players[player_index] = updated_player
 
-            return replace(game_state, players=new_players)
+            # ✅ 修复：胡牌后让下一个玩家摸牌（血战到底：继续游戏）
+            # 根据规则："胡牌后轮到下一个玩家，游戏继续"
+            next_player_index = (player_index + 1) % 4
+            next_player = new_players[next_player_index]
+
+            # 检查牌墙是否为空
+            new_wall = list(game_state.wall)
+            if not new_wall:
+                # 牌墙为空，游戏结束
+                from mahjong.services.game_manager import GameManager
+                logger.info(f"[HU AFTER] Wall empty after HU, ending game")
+                temp_state = replace(game_state, players=new_players, current_player_index=next_player_index)
+                return GameManager.end_game(temp_state)
+
+            # 让下一个玩家摸牌
+            logger.info(
+                f"[HU AFTER] Next player {next_player.player_id} drawing tile..."
+            )
+            drawn_tile = new_wall.pop(0)
+            updated_next_player_hand = list(next_player.hand)
+            updated_next_player_hand.append(drawn_tile)
+
+            logger.info(
+                f"[HU AFTER] Next player {next_player.player_id} drew {drawn_tile}, "
+                f"hand: {len(next_player.hand)} → {len(updated_next_player_hand)} tiles"
+            )
+
+            # 更新下一个玩家的状态
+            updated_next_player = replace(
+                next_player,
+                hand=updated_next_player_hand,
+                last_drawn_tile=drawn_tile
+            )
+            new_players[next_player_index] = updated_next_player
+
+            logger.info(
+                f"[HU AFTER] Switching to next player: "
+                f"{game_state.players[player_index].player_id} (index {player_index}) → "
+                f"{updated_next_player.player_id} (index {next_player_index})"
+            )
+
+            return replace(
+                game_state,
+                players=new_players,
+                wall=new_wall,
+                current_player_index=next_player_index
+            )
 
         if action_type == ActionType.PONG:
             # Check if player has 2 matching tiles in hand
@@ -489,12 +669,26 @@ class PlayerActions:
                     f"Player {player_id} cannot PONG {target_tile} - only has {player.hand.count(target_tile)} in hand"
                 )
 
-            logger.info(f"Game {game_state.game_id}: Player {player_id} successfully PONG (碰) {target_tile}")
+            # 📊 LOG: 碰牌前
+            logger.info(
+                f"[PONG] === PONG START === player={player_id}, target_tile={target_tile}"
+            )
+            logger.info(
+                f"[PONG]   before_hand_count={len(player.hand)}, hand={player.hand}"
+            )
 
             # Remove 2 tiles from hand
             new_hand = list(player.hand)
             for _ in range(2):
                 new_hand.remove(target_tile)
+
+            # 📊 LOG: 碰牌后
+            logger.info(
+                f"[PONG]   after_hand_count={len(new_hand)} (removed 2 tiles)"
+            )
+            logger.info(
+                f"[PONG]   must discard 1 tile next (hand will become {len(new_hand)-1})"
+            )
 
             # Create meld (碰) with the 3 tiles
             new_meld = Meld(meld_type=ActionType.PONG, tiles=(target_tile, target_tile, target_tile), is_concealed=False)
@@ -520,10 +714,23 @@ class PlayerActions:
                     f"Player {player_id} cannot KONG_EXPOSED {target_tile} - only has {player.hand.count(target_tile)} in hand"
                 )
 
+            # 📊 LOG: 杠牌前
+            logger.info(
+                f"[KONG] === KONG_EXPOSED START === player={player_id}, target_tile={target_tile}"
+            )
+            logger.info(
+                f"[KONG]   before_hand_count={len(player.hand)}, hand={player.hand}"
+            )
+
             # Remove 3 tiles from hand
             new_hand = list(player.hand)
             for _ in range(3):
                 new_hand.remove(target_tile)
+
+            # 📊 LOG: 移除3张后
+            logger.info(
+                f"[KONG]   after_remove_3: hand_count={len(new_hand)}"
+            )
 
             # Create meld (明杠) with the 4 tiles
             meld_type = ActionType.KONG_EXPOSED if action_type == ActionType.KONG_EXPOSED else ActionType.KONG

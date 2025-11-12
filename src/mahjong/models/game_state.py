@@ -4,6 +4,7 @@ from typing import List
 from mahjong.constants.enums import GamePhase
 from mahjong.models.player import Player
 from mahjong.models.tile import Tile
+from mahjong.models.discarded_tile import DiscardedTile
 
 
 @dataclass
@@ -12,7 +13,7 @@ class GameState:
     players: List[Player] = field(default_factory=list)
     current_player_index: int = 0
     wall: List[Tile] = field(default_factory=list)
-    public_discards: List[Tile] = field(default_factory=list)
+    public_discards: List[DiscardedTile] = field(default_factory=list)
     game_phase: GamePhase = GamePhase.PREPARING
     base_score: int = 1  # 底分（杠分计算用）
     initial_total_score: int = 400  # 初始总分（4人×100分，用于验证零和）
@@ -59,8 +60,8 @@ class GameState:
             "current_player_index": self.current_player_index,
             "wall_remaining_count": self.wall_remaining_count,
             "public_discards": [
-                {"suit": tile.suit.name, "rank": tile.rank}
-                for tile in self.public_discards
+                discard.to_dict()
+                for discard in self.public_discards
             ],
             "base_score": self.base_score,
             "players": [
@@ -95,18 +96,28 @@ class GameState:
                 }
                 for meld in player.melds
             ],
+            "hu_tiles": [
+                {"suit": tile.suit.name, "rank": tile.rank}
+                for tile in player.hu_tiles
+            ],
             "buried_cards": [
                 {"suit": tile.suit.name, "rank": tile.rank}
                 for tile in player.buried_cards
             ],
         }
 
-        # 只有请求的玩家能看到自己的完整手牌
+        # 只有请求的玩家能看到自己的完整手牌和最后摸的牌
         if is_viewer:
             data["hand"] = [
                 {"suit": tile.suit.name, "rank": tile.rank}
                 for tile in player.hand
             ]
+            # 最后摸的牌（用于自摸胡牌检测）
+            data["last_drawn_tile"] = (
+                {"suit": player.last_drawn_tile.suit.name, "rank": player.last_drawn_tile.rank}
+                if player.last_drawn_tile
+                else None
+            )
         else:
             # 其他玩家只能看到手牌数量
             data["hand_count"] = len(player.hand)

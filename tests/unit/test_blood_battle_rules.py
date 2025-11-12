@@ -210,3 +210,69 @@ def test_drawn_tile_recorded_correctly():
     next_player = game_state.players[game_state.current_player_index]
     assert next_player.last_drawn_tile is not None
     assert len(next_player.hand) == 12  # 11 + 1
+
+
+def test_second_self_draw_hu_with_melds():
+    """测试：已胡玩家第二次自摸（有明牌的情况）- Issue #75"""
+    from mahjong.models.meld import Meld
+
+    # 创建已胡玩家（第一次胡了万7）
+    player = Player(
+        "human",
+        hand=[
+            # 手牌8张（第一次胡牌后，手牌从11张变成10张，加上新摸的万4变成11张，但万4还没加入）
+            Tile(Suit.WAN, 2), Tile(Suit.WAN, 2),  # 将牌
+            Tile(Suit.WAN, 5), Tile(Suit.WAN, 6),  # 顺子（缺万4）
+            Tile(Suit.TIAO, 7), Tile(Suit.TIAO, 8), Tile(Suit.TIAO, 9),  # 顺子
+            Tile(Suit.WAN, 4),  # 刚摸的牌（这里模拟摸牌后的状态）
+        ],
+        melds=[
+            # 明牌：条1, 条1, 条1（碰）
+            Meld(
+                meld_type=ActionType.PONG,
+                tiles=(Tile(Suit.TIAO, 1), Tile(Suit.TIAO, 1), Tile(Suit.TIAO, 1))
+            )
+        ],
+        hu_tiles=[Tile(Suit.WAN, 7)],  # 第一次胡的牌
+        is_hu=True,  # 已经胡过一次
+        missing_suit=Suit.TONG,  # 缺筒子
+        last_drawn_tile=Tile(Suit.WAN, 4),  # 刚摸的牌
+    )
+
+    game_state = GameState(
+        game_id="test",
+        players=[
+            player,
+            Player("AI_1", hand=[Tile(Suit.TONG, 2)] * 11, missing_suit=Suit.TIAO),
+            Player("AI_2", hand=[Tile(Suit.TONG, 3)] * 11, missing_suit=Suit.TIAO),
+            Player("AI_3", hand=[Tile(Suit.TONG, 4)] * 11, missing_suit=Suit.TIAO),
+        ],
+        wall=[Tile(Suit.WAN, 9)] * 20,
+        game_phase=GamePhase.PLAYING,
+        current_player_index=0,
+    )
+
+    # 玩家自摸万4，应该能胡牌
+    # 胡牌结构：
+    # - 万2, 万2（将）
+    # - 万4, 万5, 万6（顺子）
+    # - 条7, 条8, 条9（顺子）
+    # - 条1, 条1, 条1（刻子，明牌）
+    # 总共：2 + 3 + 3 + 3 = 11张
+
+    # 玩家点击"胡"按钮
+    game_state_after = PlayerActions.declare_action(
+        game_state, "human", ActionType.HU, Tile(Suit.WAN, 4)
+    )
+
+    # 验证：
+    # 1. 玩家仍然是已胡状态
+    assert game_state_after.players[0].is_hu is True
+
+    # 2. 万4 被加入 hu_tiles（第二次胡的牌）
+    assert Tile(Suit.WAN, 4) in game_state_after.players[0].hu_tiles
+    assert Tile(Suit.WAN, 7) in game_state_after.players[0].hu_tiles  # 第一次胡的牌还在
+    assert len(game_state_after.players[0].hu_tiles) == 2  # 总共胡了2次
+
+    # 3. 手牌数量减少（万4 从手牌移到 hu_tiles）
+    assert len(game_state_after.players[0].hand) == 7  # 8 - 1 = 7

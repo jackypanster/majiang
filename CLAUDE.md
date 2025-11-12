@@ -59,6 +59,50 @@ uv run ruff check .
 uv run ruff check --fix .
 ```
 
+### 开发服务启动（推荐）
+
+**一键启动前后端服务**（自动清空日志、杀死旧进程）：
+```bash
+bash scripts/dev.sh
+```
+
+这个脚本会自动执行以下操作：
+1. 清空日志文件（`logs/backend.log`, `logs/frontend.log`）
+2. 杀死占用端口 8000（后端）和 5173（前端）的旧进程
+3. 启动后端服务（日志输出到 `logs/backend.log`）
+4. 启动前端服务（日志输出到 `logs/frontend.log`）
+
+**单独清空日志**（不重启服务）：
+```bash
+bash scripts/clean-logs.sh
+```
+
+**查看实时日志**：
+```bash
+# 查看后端日志
+tail -f logs/backend.log
+
+# 查看前端日志
+tail -f logs/frontend.log
+
+# 同时查看两个日志
+tail -f logs/*.log
+```
+
+**手动启动服务**（如果不使用 scripts/dev.sh）：
+```bash
+# 启动后端（端口 8000）
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 启动前端（端口 5173）
+cd frontend && npm run dev
+```
+
+**访问地址**：
+- 游戏前端: http://localhost:5173
+- API 文档: http://localhost:8000/docs
+- API 健康检查: http://localhost:8000
+
 ## 核心架构
 
 ### 目录结构
@@ -262,6 +306,8 @@ docs: 更新XXX文档
 ## Active Technologies
 - Python 3.8+ (required for modern dataclass support, already in project) (002-fastapi-backend)
 - In-memory only (dict-based `GAMES: Dict[str, GameSession]`, no database) (002-fastapi-backend)
+- TypeScript 5.0+, Node.js 18+ + React 18+, Vite 5+, Zustand 4+, TanStack Query 5+, Tailwind CSS 3+, Axios 1+ (001-frontend)
+- 浏览器内存（无持久化，游戏状态由后端管理） (001-frontend)
 
 ## Recent Changes
 - 002-fastapi-backend: Added Python 3.8+ (required for modern dataclass support, already in project)
