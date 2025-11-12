@@ -16,3 +16,4 @@ class Player:
     score: int = 100  # 初始分数100分（零和游戏：4人×100=400）
     is_hu: bool = False
     last_drawn_tile: Optional[Tile] = None  # 最后摸的牌（用于已胡玩家"摸什么打什么"）
+    hu_tiles: List[Tile] = field(default_factory=list)  # 已经胡过的牌（血战到底：可多次胡牌）
