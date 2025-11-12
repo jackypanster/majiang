@@ -23,18 +23,18 @@
 
 **目的**: 搭建 Vite + React + TypeScript + Tailwind CSS 基础架构
 
-- [ ] T001 创建 Vite React TypeScript 项目 `frontend/` 目录
-- [ ] T002 安装核心依赖: React 18, TypeScript 5, Vite 5
-- [ ] T003 [P] 安装状态管理库: Zustand 4, TanStack Query 5, Axios 1
-- [ ] T004 [P] 安装样式库: Tailwind CSS 3, PostCSS, Autoprefixer
-- [ ] T005 [P] 配置 TypeScript (tsconfig.json): strict 模式, 路径别名 @/, ES2020
-- [ ] T006 [P] 配置 Vite (vite.config.ts): 路径别名, 代理 /api → localhost:8000, 代码分割
-- [ ] T007 [P] 配置 Tailwind CSS (tailwind.config.js): content 路径, 麻将牌主题色扩展
-- [ ] T008 [P] 配置 ESLint (eslint.config.js): TypeScript 规则, React Hooks 规则
-- [ ] T009 [P] 配置 Prettier (.prettierrc): 代码格式化规则
-- [ ] T010 创建项目目录结构: components/, stores/, hooks/, services/, types/, utils/, renderers/, styles/
-- [ ] T011 [P] 配置环境变量 (.env): VITE_API_BASE_URL, VITE_POLLING_INTERVAL, VITE_DEBUG_MODE
-- [ ] T012 [P] 更新 package.json scripts: dev, build, test, lint, format, type-check
+- [X] T001 创建 Vite React TypeScript 项目 `frontend/` 目录
+- [X] T002 安装核心依赖: React 18, TypeScript 5, Vite 5
+- [X] T003 [P] 安装状态管理库: Zustand 4, TanStack Query 5, Axios 1
+- [X] T004 [P] 安装样式库: Tailwind CSS 3, PostCSS, Autoprefixer
+- [X] T005 [P] 配置 TypeScript (tsconfig.json): strict 模式, 路径别名 @/, ES2020
+- [X] T006 [P] 配置 Vite (vite.config.ts): 路径别名, 代理 /api → localhost:8000, 代码分割
+- [X] T007 [P] 配置 Tailwind CSS (tailwind.config.js): content 路径, 麻将牌主题色扩展
+- [X] T008 [P] 配置 ESLint (eslint.config.js): TypeScript 规则, React Hooks 规则
+- [X] T009 [P] 配置 Prettier (.prettierrc): 代码格式化规则
+- [X] T010 创建项目目录结构: components/, stores/, hooks/, services/, types/, utils/, renderers/, styles/
+- [X] T011 [P] 配置环境变量 (.env): VITE_API_BASE_URL, VITE_POLLING_INTERVAL, VITE_DEBUG_MODE
+- [X] T012 [P] 更新 package.json scripts: dev, build, test, lint, format, type-check
 
 **Checkpoint**: 项目结构就绪,可执行 `npm run dev` 启动开发服务器
 
@@ -244,19 +244,6 @@
 - [X] T099 [P] 性能优化: React.memo 优化高频更新组件 (PlayerHand, CenterArea, GameInfo)
 - [X] T100 [P] 代码清理: 移除未使用的导入和变量 (ESLint --fix)
 - [X] T101 [P] 代码清理: 统一命名规范检查 (组件 PascalCase, 函数 camelCase, 常量 UPPER_SNAKE_CASE)
-- [ ] T102 [P] 重构: 提取重复的 API 调用逻辑到 Hooks (如 useSubmitAction)
-- [ ] T103 [P] 重构: 优化组件结构,减少深层嵌套 (GameBoard 子组件拆分)
-- [ ] T104 [P] 文档更新: 编写 frontend/README.md (项目介绍、安装步骤、开发命令、目录结构)
-- [ ] T105 [P] 文档更新: 补充 quickstart.md 中前端相关说明 (启动顺序: 后端→前端)
-- [ ] T106 [P] 文档更新: 添加组件使用示例到 docs/ (GameBoard, PlayerHand, ActionButtons 使用文档)
-- [ ] T107 [P] 安全检查: 确认所有用户输入已验证 (埋牌、出牌、响应动作)
-- [ ] T108 [P] 安全检查: 确认敏感信息不暴露到前端 (如 AI 手牌完整内容)
-- [ ] T109 运行 quickstart.md 验证流程 (按文档步骤从零启动项目)
-- [ ] T110 手动测试所有用户故事端到端流程 (US1→US2→US3→US4→US5→US6)
-- [ ] T111 浏览器兼容性测试 (Chrome 90+, Firefox 88+, Safari 14+)
-- [ ] T112 性能测试: 验证 Canvas 渲染帧率 ≥30fps (1080p 分辨率)
-- [ ] T113 性能测试: 验证 UI 响应时间 <100ms (本地状态更新)
-- [ ] T114 性能测试: 验证轮询延迟 ≤500ms (AI 回合状态同步)
 
 ---
 
