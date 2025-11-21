@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { getTileDisplay } from '@/utils/tileUtils';
 import type { Player, Tile, Meld } from '@/types';
+import { MahjongTile } from '@/components/game/MahjongTile';
 
 interface PlayerAreaProps {
   /**
@@ -69,9 +69,14 @@ function renderMelds(melds: Meld[], orientation: 'horizontal' | 'vertical') {
           {meld.tiles.map((tile, tileIndex) => (
             <div
               key={tileIndex}
-              className="w-8 h-10 flex items-center justify-center bg-white text-xs font-bold rounded border border-gray-300"
+              className="rounded border border-gray-300 overflow-hidden"
             >
-              {getTileDisplay(tile)}
+              <MahjongTile
+                suit={tile.suit}
+                rank={tile.rank}
+                width={32}
+                height={40}
+              />
             </div>
           ))}
         </div>
@@ -100,10 +105,15 @@ function renderBuriedCards(
         {buriedCards.map((tile, index) => (
           <div
             key={index}
-            className="w-6 h-8 flex items-center justify-center bg-white text-xs font-bold rounded border border-purple-400"
+            className="rounded border border-purple-400 overflow-hidden"
             title="埋牌"
           >
-            {getTileDisplay(tile)}
+            <MahjongTile
+              suit={tile.suit}
+              rank={tile.rank}
+              width={24}
+              height={32}
+            />
           </div>
         ))}
       </div>
