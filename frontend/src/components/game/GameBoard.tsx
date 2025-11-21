@@ -31,8 +31,8 @@ import { logger } from '@/utils/logger';
 import { GamePhase } from '@/types';
 import type { Tile } from '@/types';
 
-const MIN_WINDOW_WIDTH = 1280;
-const MIN_WINDOW_HEIGHT = 720;
+const MIN_WINDOW_WIDTH = 1024;
+const MIN_WINDOW_HEIGHT = 600;
 
 export function GameBoard() {
   const [isCreating, setIsCreating] = useState(false);
@@ -534,23 +534,20 @@ export function GameBoard() {
 
           {/* Winner Announcement */}
           {winners.length > 0 ? (
-            <div className={`rounded-lg shadow-lg p-8 mb-6 ${
-              humanWon ? 'bg-green-50 border-4 border-green-500' : 'bg-blue-50 border-4 border-blue-400'
-            }`}>
-              <h3 className={`text-2xl font-bold text-center mb-4 ${
-                humanWon ? 'text-green-800' : 'text-blue-800'
+            <div className={`rounded-lg shadow-lg p-8 mb-6 ${humanWon ? 'bg-green-50 border-4 border-green-500' : 'bg-blue-50 border-4 border-blue-400'
               }`}>
+              <h3 className={`text-2xl font-bold text-center mb-4 ${humanWon ? 'text-green-800' : 'text-blue-800'
+                }`}>
                 {humanWon ? '🎉 恭喜你胡牌了！' : '游戏结束'}
               </h3>
               <div className="space-y-3">
                 {winners.map((winner: any) => (
                   <div
                     key={winner.playerId}
-                    className={`p-4 rounded-md border-2 ${
-                      winner.playerId === 'human'
-                        ? 'bg-green-100 border-green-500'
-                        : 'bg-blue-100 border-blue-400'
-                    }`}
+                    className={`p-4 rounded-md border-2 ${winner.playerId === 'human'
+                      ? 'bg-green-100 border-green-500'
+                      : 'bg-blue-100 border-blue-400'
+                      }`}
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-lg">
@@ -558,9 +555,8 @@ export function GameBoard() {
                       </span>
                       <div className="text-right">
                         <div className="text-sm text-gray-600">番数: {winner.fanCount}番</div>
-                        <div className={`text-lg font-bold ${
-                          winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <div className={`text-lg font-bold ${winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}分
                         </div>
                       </div>
@@ -587,9 +583,8 @@ export function GameBoard() {
               {gameStateData.players.map((player) => (
                 <div
                   key={player.playerId}
-                  className={`p-3 rounded flex justify-between items-center ${
-                    player.playerId === 'human' ? 'bg-blue-50 font-bold' : 'bg-gray-50'
-                  }`}
+                  className={`p-3 rounded flex justify-between items-center ${player.playerId === 'human' ? 'bg-blue-50 font-bold' : 'bg-gray-50'
+                    }`}
                 >
                   <span>{player.playerId === 'human' ? '你' : player.playerId}</span>
                   <span className="text-lg">{player.score}分</span>
@@ -729,8 +724,10 @@ export function GameBoard() {
             "ai1  center  ai3"
             "ai1  human   ai3"
           `,
-          gridTemplateColumns: 'min-content 1fr min-content',
-          gridTemplateRows: '80px minmax(200px, 1fr) 160px'
+          gridTemplateColumns: 'auto 1fr auto',
+          gridTemplateRows: '80px minmax(200px, 1fr) 160px',
+          maxWidth: '100vw',
+          overflow: 'hidden'
         }}
       >
         {/* Top-center: AI_2 */}
@@ -809,8 +806,8 @@ export function GameBoard() {
                 gameStateData.players[gameStateData.currentPlayerIndex]?.playerId === 'human'
                   ? humanPlayer?.lastDrawnTile || null
                   : (gameStateData.publicDiscards?.length > 0
-                      ? gameStateData.publicDiscards[gameStateData.publicDiscards.length - 1].tile
-                      : null)
+                    ? gameStateData.publicDiscards[gameStateData.publicDiscards.length - 1].tile
+                    : null)
               }
               availableActions={availableActions}
               onSuccess={() => {
@@ -866,11 +863,10 @@ export function GameBoard() {
                         return (
                           <div
                             key={winner.playerId}
-                            className={`p-3 rounded-lg ${
-                              winner.playerId === 'human'
-                                ? 'bg-green-50 border-2 border-green-500'
-                                : 'bg-blue-50 border border-blue-300'
-                            }`}
+                            className={`p-3 rounded-lg ${winner.playerId === 'human'
+                              ? 'bg-green-50 border-2 border-green-500'
+                              : 'bg-blue-50 border border-blue-300'
+                              }`}
                           >
                             <div className="flex justify-between items-center">
                               <div>
@@ -888,9 +884,8 @@ export function GameBoard() {
                                 <div className="text-gray-600">
                                   番数: {winner.fanCount}番
                                 </div>
-                                <div className={`font-bold ${
-                                  winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
-                                }`}>
+                                <div className={`font-bold ${winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
                                   {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}分
                                 </div>
                               </div>
@@ -918,11 +913,10 @@ export function GameBoard() {
                   {gameStateData.players.map((player) => (
                     <div
                       key={player.playerId}
-                      className={`p-3 rounded-lg flex justify-between items-center ${
-                        player.playerId === 'human'
-                          ? 'bg-blue-100 border-2 border-blue-500 font-bold'
-                          : 'bg-gray-50 border border-gray-200'
-                      }`}
+                      className={`p-3 rounded-lg flex justify-between items-center ${player.playerId === 'human'
+                        ? 'bg-blue-100 border-2 border-blue-500 font-bold'
+                        : 'bg-gray-50 border border-gray-200'
+                        }`}
                     >
                       <span>{player.playerId === 'human' ? '你' : player.playerId}</span>
                       <span className="text-lg">{player.score}分</span>
@@ -974,11 +968,10 @@ export function GameBoard() {
                 {winDetails.winners.map((winner) => (
                   <div
                     key={winner.playerId}
-                    className={`p-4 rounded-lg ${
-                      winner.playerId === 'human'
-                        ? 'bg-green-50 border-2 border-green-500'
-                        : 'bg-gray-50 border border-gray-300'
-                    }`}
+                    className={`p-4 rounded-lg ${winner.playerId === 'human'
+                      ? 'bg-green-50 border-2 border-green-500'
+                      : 'bg-gray-50 border border-gray-300'
+                      }`}
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-lg">
@@ -994,9 +987,8 @@ export function GameBoard() {
                             </span>
                           )}
                         </div>
-                        <div className={`text-lg font-bold ${
-                          winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <div className={`text-lg font-bold ${winner.scoreChange > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           {INFO_LABELS.SCORE_CHANGE}: {winner.scoreChange > 0 ? '+' : ''}{winner.scoreChange}
                         </div>
                       </div>
