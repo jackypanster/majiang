@@ -8,8 +8,8 @@ export const POLLING_INTERVAL = Number(import.meta.env.VITE_POLLING_INTERVAL) ||
 export const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';
 
 // Mahjong tile dimensions (CSS pixels)
-export const TILE_WIDTH = 60;
-export const TILE_HEIGHT = 80;
+export const TILE_WIDTH = 48;
+export const TILE_HEIGHT = 64;
 export const TILE_GAP = 8;
 
 // Animation durations (ms)

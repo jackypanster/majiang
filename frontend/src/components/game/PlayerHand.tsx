@@ -118,11 +118,13 @@ function arePropsEqual(
   }
 
   // Compare selectedTiles array
+  const prevSelected = prevProps.selectedTiles || [];
+  const nextSelected = nextProps.selectedTiles || [];
   if (
-    prevProps.selectedTiles !== nextProps.selectedTiles &&
-    (prevProps.selectedTiles.length !== nextProps.selectedTiles.length ||
-      prevProps.selectedTiles.some((tile, i) => {
-        const nextTile = nextProps.selectedTiles[i];
+    prevSelected !== nextSelected &&
+    (prevSelected.length !== nextSelected.length ||
+      prevSelected.some((tile, i) => {
+        const nextTile = nextSelected[i];
         return tile.suit !== nextTile.suit || tile.rank !== nextTile.rank;
       }))
   ) {
@@ -226,7 +228,7 @@ const PlayerHandComponent = function PlayerHand({
   };
 
   return (
-    <div className="flex flex-row gap-4 items-start">
+    <div className="flex flex-row gap-2 items-start">
       {/* 埋牌区域 - 最左侧 */}
       {buriedCards.length > 0 && (
         <div className="flex flex-col gap-2">
@@ -362,14 +364,13 @@ const PlayerHandComponent = function PlayerHand({
                   <div
                     className={`
                       rounded-md transition-all
-                      ${
-                        isSelected
-                          ? 'transform -translate-y-2'
-                          : isLockedTile
-                            ? 'opacity-50'
-                            : isLastDrawn
-                              ? 'ring-4 ring-green-400 shadow-lg shadow-green-300'
-                              : 'hover:ring-2 ring-gray-300'
+                      ${isSelected
+                        ? 'transform -translate-y-2'
+                        : isLockedTile
+                          ? 'opacity-50'
+                          : isLastDrawn
+                            ? 'ring-4 ring-green-400 shadow-lg shadow-green-300'
+                            : 'hover:ring-2 ring-gray-300'
                       }
                     `}
                     title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌 - ${isHandLocked ? '手牌锁定时必须打出' : '可以打出'})` : tileId}

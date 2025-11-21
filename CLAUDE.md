@@ -308,6 +308,8 @@ docs: 更新XXX文档
 - In-memory only (dict-based `GAMES: Dict[str, GameSession]`, no database) (002-fastapi-backend)
 - TypeScript 5.0+, Node.js 18+ + React 18+, Vite 5+, Zustand 4+, TanStack Query 5+, Tailwind CSS 3+, Axios 1+ (001-frontend)
 - 浏览器内存（无持久化，游戏状态由后端管理） (001-frontend)
+- Python 3.8+ (dataclass support required) + None (core library is stdlib-only per constitution) (001-hu-scoring-fixes)
+- In-memory GameState (no persistence layer) (001-hu-scoring-fixes)
 
 ## Recent Changes
 - 002-fastapi-backend: Added Python 3.8+ (required for modern dataclass support, already in project)
