@@ -10,8 +10,8 @@ import { memo } from 'react';
 import { getTileId } from '@/types';
 import type { Tile, Meld } from '@/types';
 import { INFO_LABELS } from '@/utils/messages';
-import { TileCanvas } from '@/components/canvas/TileCanvas';
 import { TILE_WIDTH, TILE_HEIGHT } from '@/utils/constants';
+import { MahjongTile } from './MahjongTile';
 
 interface PlayerHandProps {
   /**
@@ -246,8 +246,9 @@ const PlayerHandComponent = function PlayerHand({
                 key={index}
                 className="rounded border border-orange-400 overflow-hidden"
               >
-                <TileCanvas
-                  tile={tile}
+                <MahjongTile
+                  suit={tile.suit}
+                  rank={tile.rank}
                   width={TILE_WIDTH * 0.9}
                   height={TILE_HEIGHT * 0.9}
                 />
@@ -272,8 +273,9 @@ const PlayerHandComponent = function PlayerHand({
                     key={tileIndex}
                     className="rounded border border-gray-300 overflow-hidden"
                   >
-                    <TileCanvas
-                      tile={tile}
+                    <MahjongTile
+                      suit={tile.suit}
+                      rank={tile.rank}
                       width={TILE_WIDTH * 0.9}
                       height={TILE_HEIGHT * 0.9}
                     />
@@ -374,12 +376,11 @@ const PlayerHandComponent = function PlayerHand({
                       }
                     `}
                     title={isLockedTile ? `${tileId} (已锁定)` : isLastDrawn ? `${tileId} (刚摸的牌 - ${isHandLocked ? '手牌锁定时必须打出' : '可以打出'})` : tileId}
+                    onClick={() => !isLockedTile && handleTileClick(tile, originalIndex)}
                   >
-                    <TileCanvas
-                      tile={tile}
-                      onClick={canClick ? () => handleTileClick(tile, originalIndex) : undefined}
-                      isSelected={isSelected}
-                      isDisabled={isLockedTile}
+                    <MahjongTile
+                      suit={tile.suit}
+                      rank={tile.rank}
                       width={TILE_WIDTH}
                       height={TILE_HEIGHT}
                     />
@@ -406,8 +407,9 @@ const PlayerHandComponent = function PlayerHand({
                 key={index}
                 className="rounded-md border-2 border-yellow-400 overflow-hidden"
               >
-                <TileCanvas
-                  tile={tile}
+                <MahjongTile
+                  suit={tile.suit}
+                  rank={tile.rank}
                   width={TILE_WIDTH * 0.9}
                   height={TILE_HEIGHT * 0.9}
                 />
