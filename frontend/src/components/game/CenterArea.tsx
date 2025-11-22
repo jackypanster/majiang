@@ -7,7 +7,7 @@
  */
 
 import { memo } from 'react';
-import { TileCanvas } from '@/components/canvas/TileCanvas';
+import { MahjongTile } from '@/components/game/MahjongTile';
 import type { DiscardedTile } from '@/types';
 
 interface CenterAreaProps {
@@ -179,8 +179,9 @@ const CenterAreaComponent = function CenterArea({
                       animation: `fadeIn 0.3s ease-out ${index * 0.05}s backwards`,
                     }}
                   >
-                    <TileCanvas
-                      tile={discardedTile.tile}
+                    <MahjongTile
+                      suit={discardedTile.tile.suit}
+                      rank={discardedTile.tile.rank}
                       width={56}
                       height={64}
                       className="rounded"
