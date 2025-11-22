@@ -1,8 +1,9 @@
 import React from 'react';
+import { Suit } from '@/types/tile';
 
 interface MahjongTileProps {
-    suit: string;
-    rank: number;
+    suit: Suit;
+    rank: number; // 1-9
     width?: number;
     height?: number;
     className?: string;
@@ -15,6 +16,20 @@ export const MahjongTile: React.FC<MahjongTileProps> = ({
     height = 64,
     className = ''
 }) => {
+    // Validate rank is in valid range (1-9)
+    if (rank < 1 || rank > 9) {
+        console.error(`[MahjongTile] Invalid rank: ${rank} for suit: ${suit}. Rank must be between 1-9.`);
+        return (
+            <div
+                className={`relative inline-block select-none ${className} bg-red-100 border-2 border-red-500 flex items-center justify-center`}
+                style={{ width, height }}
+                title={`Invalid tile: ${suit} ${rank}`}
+            >
+                <span className="text-red-700 text-xs font-bold">Invalid</span>
+            </div>
+        );
+    }
+
     // Colors
     const COLORS = {
         RED: '#d62828',
@@ -284,17 +299,17 @@ export const MahjongTile: React.FC<MahjongTileProps> = ({
 
     // Main render logic
     const renderContent = () => {
-        const normalizedSuit = suit.toUpperCase();
-        switch (normalizedSuit) {
-            case 'TONG':
+        // Suit is now a Suit enum, but handle as string for switch compatibility
+        switch (suit) {
+            case Suit.TONG:
                 return renderTong(rank);
-            case 'SUO':
-            case 'TIAO': // Handle both TIAO and SUO
+            case Suit.TIAO:
                 return renderSuo(rank);
-            case 'WAN':
+            case Suit.WAN:
                 return renderWan(rank);
             default:
-                // Fallback for unknown suits or honors (if passed)
+                // This should never happen with proper typing, but keep as fallback
+                console.error(`[MahjongTile] Unknown suit: ${suit}`);
                 return (
                     <text x="50" y="60" textAnchor="middle" fontSize="30" fill={COLORS.BLACK}>
                         {suit}{rank}
